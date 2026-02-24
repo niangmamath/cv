@@ -1,1 +1,419 @@
-/** Add styles here */
+/* === Styles Globaux & Typographie === */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background-color: #fdfdff;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* === Header & Navigation === */
+header {
+    background-color: transparent;
+    padding: 0 2rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 80px;
+}
+
+nav .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+}
+
+nav a {
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+nav a:hover {
+    color: #ffffff;
+}
+
+/* === Hero Section (Homepage) === */
+.hero {
+    position: relative;
+    background-image: url('https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-align: center;
+    padding: 12rem 2rem 8rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+    color: #fff;
+}
+
+.hero-content p {
+    font-size: 1.25rem;
+    margin: 0 auto 2.5rem auto;
+    opacity: 0.9;
+}
+
+.cta-button {
+    background-color: #ffffff;
+    color: #0056b3;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: inline-block;
+}
+
+.cta-button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* === Features Section (Homepage) === */
+.features {
+    padding: 5rem 2rem;
+    background-color: #f8f9fa;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background-color: #ffffff;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: #007bff;
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    font-size: 1.3rem;
+    margin-top: 0;
+    color: #333;
+}
+
+/* === How it Works Section (Homepage) === */
+.how-it-works {
+    padding: 5rem 2rem;
+    text-align: center;
+}
+
+.how-it-works h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 4rem;
+    color: #333;
+}
+
+.steps-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.step {
+    flex: 1;
+    max-width: 300px;
+}
+
+.step-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #e8f3ff;
+    color: #007bff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 1.5rem auto;
+    font-size: 2rem;
+}
+
+.step h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.step-arrow {
+    font-size: 2.5rem;
+    color: #007bff;
+    align-self: center;
+}
+
+/* === Testimonial Section (Homepage) === */
+.testimonial {
+    background-color: #f8f9fa;
+    padding: 5rem 2rem;
+}
+
+.testimonial-content {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.testimonial-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1.5rem;
+    border: 4px solid #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.testimonial-content blockquote {
+    font-size: 1.3rem;
+    font-style: italic;
+    color: #555;
+    border-left: 4px solid #007bff;
+    padding-left: 1.5rem;
+    margin: 0 0 1rem 0;
+    text-align: left;
+}
+
+.testimonial-content cite {
+    font-weight: 600;
+    color: #333;
+}
+
+/* === Footer === */
+footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    background-color: #111;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+/*
+============================================
+        STYLES FOR ANALYZER PAGE
+============================================
+*/
+
+.analyzer-page header {
+    position: static; /* Override homepage hero header */
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.analyzer-page nav .logo, .analyzer-page nav a {
+    color: #333;
+}
+
+.analyzer-page nav a:hover {
+    color: #007bff;
+}
+
+.analyzer-page .container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.analyzer-page h1 {
+    font-size: 2rem;
+    color: #343a40;
+    text-align: center;
+}
+
+.analyzer-page .subtitle {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.analyzer-page .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.analyzer-page label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.analyzer-page textarea,
+.analyzer-page input[type="file"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.analyzer-page button {
+    display: block;
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.analyzer-page button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.analyzer-page button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* === Results Section (Analyzer) === */
+.analyzer-page #results-container {
+    margin-top: 3rem;
+    border-top: 1px solid #e9ecef;
+    padding-top: 2rem;
+}
+
+.analyzer-page .score-wrapper,
+.analyzer-page .keywords-wrapper,
+.analyzer-page .analysis-wrapper,
+.analyzer-page .rewritten-cv-wrapper {
+    margin-bottom: 2rem;
+}
+
+.analyzer-page #results-container h2 {
+    font-size: 1.5rem;
+    color: #007bff;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.analyzer-page .score-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(#007bff 0%, #e9ecef 0%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem auto;
+    transition: background 1s ease-in-out;
+}
+
+.analyzer-page #score-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #343a40;
+}
+
+.analyzer-page #analysis-result h3,
+.analyzer-page #analysis-result h4 {
+    color: #495057;
+    margin-top: 1.5rem;
+}
+
+.analyzer-page #analysis-result ul {
+    padding-left: 20px;
+}
+
+.analyzer-page pre {
+    background-color: #f1f3f5;
+    padding: 1rem;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.9rem;
+    border: 1px solid #dee2e6;
+}
+
+.analyzer-page #copy-cv-button,
+.analyzer-page #download-pdf-button {
+    width: auto;
+    padding: 0.6rem 1.2rem;
+    margin-right: 1rem;
+    margin-top: 1rem;
+    background-color: #28a745;
+}
+
+.analyzer-page #download-pdf-button {
+    background-color: #dc3545;
+}
+
+.analyzer-page #copy-cv-button:hover,
+.analyzer-page #download-pdf-button:hover {
+    opacity: 0.9;
+}

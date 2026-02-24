@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyseur de CV par IA</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="analyzer-page">
+    <header>
+        <nav>
+            <a href="/" class="logo">CV-Optimizer</a>
+            <ul>
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/analyzer">Analyseur</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>Analyseur de CV par IA</h1>
+        <p class="subtitle">Obtenez un score de compatibilité, des conseils d'amélioration et une version de votre CV optimisée pour le poste.</p>
+        
+        <form id="analysis-form" action="/analyze" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="jobDescription">Description de l'offre d'emploi</label>
+                <textarea id="jobDescription" name="jobDescription" rows="10" placeholder="Copiez et collez ici la description du poste..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="cv">Téléverser un CV (PDF)</label>
+                <input type="file" id="cv" name="cv" accept=".pdf" required>
+            </div>
+            <button type="submit">Analyser et optimiser mon CV</button>
+        </form>
+
+        <div id="results-container" style="display:none;">
+            
+            <div class="score-wrapper">
+                <h2>Score de compatibilité</h2>
+                <div class="score-circle">
+                    <span id="score-value">0%</span>
+                </div>
+            </div>
+
+            <div class="keywords-wrapper">
+                <h2>Mots-clés ATS recommandés</h2>
+                <p id="keywords-result"></p>
+            </div>
+
+            <div class="analysis-wrapper">
+                <h2>Analyse et Recommandations</h2>
+                <div id="analysis-result"></div>
+            </div>
+
+            <div class="rewritten-cv-wrapper">
+                <h2>Votre CV optimisé</h2>
+                <pre id="rewritten-cv-result"></pre>
+                <button id="copy-cv-button">Copier le CV</button>
+                <button id="download-pdf-button">Télécharger en PDF</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        function animateScore(finalScore) {
+            const scoreCircle = document.querySelector('.score-circle');
+            const scoreValueElement = document.getElementById('score-value');
+            let currentScore = 0;
+            const duration = 1500; // ms
+            const stepTime = 20; // ms
+            const steps = duration / stepTime;
+            const increment = finalScore / steps;
+
+            const interval = setInterval(() => {
+                currentScore += increment;
+                if (currentScore >= finalScore) {
+                    currentScore = finalScore;
+                    clearInterval(interval);
+                }
+                scoreValueElement.textContent = `${Math.round(currentScore)}%`;
+                scoreCircle.style.background = `conic-gradient(#007bff ${currentScore * 3.6}deg, #e9ecef ${currentScore * 3.6}deg)`;
+            }, stepTime);
+        }
+
+        document.getElementById('analysis-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const resultsContainer = document.getElementById('results-container');
+            const analysisResult = document.getElementById('analysis-result');
+            const keywordsResult = document.getElementById('keywords-result');
+            const rewrittenCvResult = document.getElementById('rewritten-cv-result');
+            const submitButton = form.querySelector('button[type="submit"]');
+
+            submitButton.disabled = true;
+            submitButton.innerText = 'Analyse en cours...';
+            resultsContainer.style.display = 'none';
+
+            try {
+                const response = await fetch(form.action, {
+                    method: form.method,
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorText = data.error || `Une erreur est survenue: ${response.statusText}`;
+                    throw new Error(errorText);
+                }
+                
+                // Animer le score
+                animateScore(data.score);
+
+                analysisResult.innerHTML = marked.parse(data.analysis);
+                keywordsResult.textContent = data.keywords;
+                rewrittenCvResult.textContent = data.rewritten_cv;
+                resultsContainer.style.display = 'block';
+
+            } catch (error) {
+                console.error('Erreur lors de l\'analyse:', error);
+                analysisResult.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                resultsContainer.style.display = 'block';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerText = 'Analyser et optimiser mon CV';
+            }
+        });
+
+        document.getElementById('copy-cv-button').addEventListener('click', function() {
+            const cvText = document.getElementById('rewritten-cv-result').textContent;
+            navigator.clipboard.writeText(cvText).then(() => {
+                this.innerText = 'Copié !';
+                setTimeout(() => { this.innerText = 'Copier le CV'; }, 2000);
+            });
+        });
+
+        document.getElementById('download-pdf-button').addEventListener('click', async function() {
+            const cvText = document.getElementById('rewritten-cv-result').textContent;
+            const downloadButton = this;
+
+            downloadButton.disabled = true;
+            downloadButton.innerText = 'Génération du PDF...';
+
+            try {
+                const response = await fetch('/download-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cv_text: cvText })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur du serveur: ${errorText}`);
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'cv-optimise.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+            } catch (error) {
+                console.error('Erreur de téléchargement:', error);
+                alert('Le téléchargement a échoué. \n' + error.message);
+            } finally {
+                downloadButton.disabled = false;
+                downloadButton.innerText = 'Télécharger en PDF';
+            }
+        });
+    </script>
+
+</body>
+</html>

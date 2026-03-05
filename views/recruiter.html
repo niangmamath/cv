@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse de CVs pour Recruteurs - CV-Optimizer</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="recruiter-page">
+    <header>
+        <nav>
+            <a href="/" class="logo">CV-Optimizer</a>
+            <ul>
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/analyzer">Analyseur</a></li>
+                <li><a href="/recruiter">Espace Recruteur</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <section class="analysis-form-section">
+            <h2>Lancer une nouvelle analyse</h2>
+            <p class="subtitle">Importez les CVs de vos candidats et l'offre d'emploi pour obtenir un classement basé sur la compatibilité.</p>
+            <form id="recruiter-form" action="/analyze-resumes" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="job-description">Description de l'offre d'emploi</label>
+                    <textarea id="job-description" name="jobDescription" rows="10" placeholder="Collez ici la description complète du poste..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="cv-files">CV des candidats (multiples fichiers acceptés)</label>
+                    <input type="file" id="cv-files" name="cvs" multiple accept=".pdf,.doc,.docx">
+                </div>
+                <button type="submit">Analyser les CVs</button>
+            </form>
+        </section>
+
+        <section class="results-section" style="display:none;">
+            <h2>Résultats de l'analyse</h2>
+            <div id="results-container">
+                <!-- Les résultats seront injectés ici -->
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 CV-Optimizer. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        const form = document.getElementById('recruiter-form');
+        const analysisFormSection = document.querySelector('.analysis-form-section');
+        const resultsSection = document.querySelector('.results-section');
+        const resultsContainer = document.getElementById('results-container');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            submitButton.disabled = true;
+            submitButton.innerText = 'Analyse en cours...';
+            resultsSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze-resumes', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Une erreur s'est produite lors de l'analyse.");
+                }
+
+                const results = await response.json();
+                
+                analysisFormSection.style.display = 'none';
+                resultsSection.style.display = 'block';
+
+                resultsContainer.innerHTML = '';
+
+                if (results.length === 0) {
+                    resultsContainer.innerHTML = '<p>Aucun CV analysé ou tous les CV étaient invalides.</p>';
+                } else {
+                    results.sort((a, b) => b.score - a.score).forEach((result, index) => {
+                        const resultElement = document.createElement('div');
+                        resultElement.classList.add('result-card');
+                        resultElement.innerHTML = `
+                            <h3>${result.filename}</h3>
+                            <p>Classement: <strong>#${index + 1}</strong></p>
+                            <p>Score: <strong>${result.score}%</strong></p>
+                        `;
+                        resultsContainer.appendChild(resultElement);
+                    });
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerText = 'Analyser les CVs';
+            }
+        });
+    </script>
+</body>
+</html>

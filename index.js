@@ -30,6 +30,11 @@ app.get('/analyzer', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'analyzer.html'));
 });
 
+// Route for the recruiter page
+app.get('/recruiter', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'recruiter.html'));
+});
+
 app.post('/analyze', upload.single('cv'), async (req, res) => {
     try {
         const jobDescription = req.body.jobDescription;
@@ -75,6 +80,70 @@ app.post('/analyze', upload.single('cv'), async (req, res) => {
         res.status(500).json({ error: "Une erreur est survenue lors de l'analyse du CV." });
     }
 });
+
+app.post('/analyze-resumes', upload.array('cvs'), async (req, res) => {
+    try {
+        const jobDescription = req.body.jobDescription;
+        const cvFiles = req.files;
+
+        if (!jobDescription || !cvFiles || cvFiles.length === 0) {
+            return res.status(400).json({ error: "La description de l'offre et au moins un CV sont requis." });
+        }
+
+        const analysisPromises = cvFiles.map(async (file) => {
+            const cvPath = file.path;
+            const dataBuffer = fs.readFileSync(cvPath);
+            const data = await pdf(dataBuffer);
+            const cvText = data.text;
+
+            const prompt = `
+                Analysez le CV suivant par rapport à la description de poste et retournez un score de compatibilité en pourcentage.
+                Votre réponse DOIT être un objet JSON contenant uniquement la clé "score". Par exemple: {"score": 85}.
+
+                **Description de poste :**
+                ${jobDescription}
+
+                **CV :**
+                ${cvText}
+            `;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [{ "role": "user", "content": prompt }],
+                response_format: { type: "json_object" },
+                temperature: 0,
+            });
+
+            const rawResponse = completion.choices[0].message.content;
+            const structuredResponse = JSON.parse(rawResponse);
+
+            fs.unlinkSync(cvPath); // Clean up the uploaded file
+
+            return {
+                filename: file.originalname,
+                score: structuredResponse.score,
+            };
+        });
+
+        const results = await Promise.all(analysisPromises);
+
+        // Sort results by score in descending order
+        results.sort((a, b) => b.score - a.score);
+
+        // Add ranking
+        const rankedResults = results.map((result, index) => ({
+            ...result,
+            rank: index + 1,
+        }));
+
+        res.json(rankedResults);
+
+    } catch (error) {
+        console.error("Error in /analyze-resumes:", error);
+        res.status(500).json({ error: "Une erreur est survenue lors de l'analyse des CVs." });
+    }
+});
+
 
 app.post('/download-pdf', (req, res) => {
     const cvContent = req.body.cv_text;

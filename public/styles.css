@@ -7,135 +7,182 @@ body {
     line-height: 1.6;
 }
 
-/* === Header & Navigation === */
-header {
-    background-color: transparent;
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 0 2rem;
-    position: absolute;
+}
+
+h1, h2, h3 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+/* === Header & Navigation === */
+.main-header {
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: sticky;
     top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    box-sizing: border-box;
+    z-index: 1000;
+    padding: 0 2rem;
 }
 
 nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 80px;
     max-width: 1200px;
     margin: 0 auto;
-    height: 80px;
 }
 
 nav .logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
     font-size: 1.5rem;
     font-weight: 700;
-    color: #ffffff;
-    text-decoration: none;
+}
+
+nav .logo img {
+    height: 40px;
+    margin-right: 10px;
 }
 
 nav ul {
     list-style: none;
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
     margin: 0;
     padding: 0;
+    align-items: center;
 }
 
 nav a {
     text-decoration: none;
-    color: rgba(255, 255, 255, 0.8);
+    color: #555;
     font-weight: 500;
-    transition: color 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 nav a:hover {
-    color: #ffffff;
+    color: #007bff;
+    background-color: #f0f6ff;
 }
 
-/* === Hero Section (Homepage & Recruiter) === */
-.hero {
-    position: relative;
-    background-image: url('https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2070&auto=format&fit=crop');
+.nav-toggle {
+    display: none; /* Caché par défaut sur les grands écrans */
+}
+
+.cta-button-secondary {
+    background-color: transparent;
+    border: 2px solid #007bff;
+    color: #007bff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.cta-button-secondary:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+
+/* === Hero Section (Homepage) === */
+.hero-section {
+    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2070&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
     color: white;
     text-align: center;
-    padding: 8rem 2rem 6rem 2rem; /* Adjusted padding for non-homepage heroes */
+    padding: 8rem 2rem;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-}
-
-.homepage .hero {
-    padding: 12rem 2rem 8rem 2rem; /* Original padding for homepage */
-}
-
-.hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+    align-items: center;
 }
 
 .hero-content {
-    position: relative;
-    z-index: 2;
     max-width: 700px;
 }
 
 .hero-content h1 {
-    font-size: 3rem; /* Adjusted for recruiter page */
+    font-size: 3.5rem;
     font-weight: 800;
     margin-bottom: 1rem;
     line-height: 1.2;
     color: #fff;
 }
 
-.homepage .hero-content h1 {
-    font-size: 3.5rem; /* Original for homepage */
-}
-
 .hero-content p {
     font-size: 1.25rem;
-    margin: 0 auto 2.5rem auto;
+    margin-bottom: 2.5rem;
     opacity: 0.9;
 }
 
-.cta-button {
-    background-color: #ffffff;
-    color: #0056b3;
+.hero-buttons .cta-button {
+    background-color: #007bff;
+    color: #fff;
     padding: 1rem 2.5rem;
     border-radius: 50px;
     text-decoration: none;
     font-weight: 700;
-    font-size: 1rem;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: inline-block;
-    border: none; /* Make sure it behaves like a button */
+    border: none;
 }
 
-.cta-button:hover {
+.hero-buttons .cta-button:hover {
     transform: translateY(-4px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
+.hero-buttons .cta-button-outline {
+    background-color: transparent;
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s;
+    display: inline-block;
+    margin-left: 1rem;
+}
+
+.hero-buttons .cta-button-outline:hover {
+    background-color: #fff;
+    color: #007bff;
+    transform: translateY(-4px);
+}
+
+
 /* === Features Section (Homepage) === */
-.features {
-    padding: 5rem 2rem;
+.features-section {
+    padding: 6rem 2rem;
     background-color: #f8f9fa;
+    text-align: center;
+}
+
+.features-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
 }
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     max-width: 1200px;
     margin: 0 auto;
+    text-align: left;
 }
 
 .feature-card {
@@ -143,7 +190,6 @@ nav a:hover {
     padding: 2.5rem;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-    text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -152,80 +198,339 @@ nav a:hover {
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
 }
 
-.feature-icon {
+.feature-card i {
     font-size: 2.5rem;
     color: #007bff;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    display: block;
 }
 
 .feature-card h3 {
     font-size: 1.3rem;
     margin-top: 0;
+    margin-bottom: 1rem;
     color: #333;
 }
 
-/* === How it Works Section (Homepage) === */
-.how-it-works {
-    padding: 5rem 2rem;
+/* === Recruiter CTA Section (Homepage) === */
+.recruiter-cta-section {
+    padding: 6rem 2rem;
+    background-color: #eaf2ff;
     text-align: center;
 }
 
-.how-it-works h2 {
+.recruiter-cta-section h2 {
     font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.recruiter-cta-section p {
+    font-size: 1.15rem;
+    max-width: 800px;
+    margin: 0 auto 2.5rem auto;
+    color: #555;
+}
+
+.recruiter-cta-section .cta-button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
     font-weight: 700;
-    margin-bottom: 4rem;
-    color: #333;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: inline-block;
+    border: none;
 }
 
-.steps-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 2rem;
-    max-width: 1100px;
-    margin: 0 auto;
-    flex-wrap: wrap;
+.recruiter-cta-section .cta-button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
-
-/* === Testimonial Section (Homepage) === */
-.testimonial {
-    background-color: #f8f9fa;
-    padding: 5rem 2rem;
-}
-
 
 /* === Footer === */
 footer {
     text-align: center;
     padding: 3rem 2rem;
-    background-color: #111;
+    background-color: #2c3e50;
     color: #aaa;
     font-size: 0.9rem;
 }
 
+
 /*
 ============================================
-        STYLES FOR INNER PAGES (ANALYZER & RECRUITER)
+        AUTH PAGES (LOGIN, REGISTER)
 ============================================
 */
-
-.analyzer-page header,
-.recruiter-page header {
-    position: static; /* Override homepage hero header */
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+.auth-page {
+    background-color: #f4f7f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem;
 }
 
-.analyzer-page nav .logo, .analyzer-page nav a,
-.recruiter-page nav .logo, .recruiter-page nav a {
+.auth-home-link {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    font-size: 1.5rem;
+    color: #888;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.auth-home-link:hover {
     color: #333;
 }
 
-.analyzer-page nav a:hover,
-.recruiter-page nav a:hover {
-    color: #007bff;
+.auth-box {
+    background-color: #ffffff;
+    max-width: 450px;
+    width: 100%;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
+.auth-header .logo {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.auth-header .logo img {
+    height: 50px;
+}
+
+.auth-header h2 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.auth-header p {
+    color: #777;
+    margin-bottom: 2.5rem;
+}
+
+.auth-box .form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.auth-box label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.auth-box input[type="text"],
+.auth-box input[type="password"],
+.auth-box input[type="email"],
+.auth-box select {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.auth-box input:focus, .auth-box select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
+}
+
+.auth-box .cta-button {
+    display: block;
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 2rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.auth-box .cta-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.auth-footer {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #777;
+}
+
+.auth-footer a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer .privacy-notice {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    color: #888;
+}
+
+
+/*
+============================================
+        INNER PAGES (ANALYZER, RECRUITER)
+============================================
+*/
+.analyzer-page, 
+.recruiter-page {
+    background-color: #f4f7f9;
+}
+
+
+
+/* === Forms & Auth Pages === */
+.form-container {
+    max-width: 450px;
+    margin: 4rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.form-container h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+textarea,
+input[type="file"],
+select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-container button[type="submit"],
+.analyzer-page .container button,
+.recruiter-page .container button {
+    display: block;
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 6px;
+    background-color: #007bff;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-container button[type="submit"]:hover,
+.analyzer-page .container button:hover,
+.recruiter-page .container button:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.form-container button:disabled,
+.analyzer-page .container button:disabled,
+.recruiter-page .container button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.form-container p {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+/* === Error Pages === */
+.error-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    background-color: #f4f7f9;
+}
+
+.error-container {
+    max-width: 500px;
+}
+
+.error-code {
+    font-size: 8rem;
+    font-weight: 800;
+    color: #007bff;
+    line-height: 1;
+}
+
+.error-container h1 {
+    font-size: 2.5rem;
+    margin-top: 0;
+    color: #333;
+}
+
+.error-page .cta-button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.error-page .cta-button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* === Analyzer & Recruiter Specific Containers === */
 .analyzer-page .container,
 .recruiter-page .container {
     max-width: 800px;
@@ -236,72 +541,40 @@ footer {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.analyzer-page h1,
-.recruiter-page .analysis-form-section h2 {
-    font-size: 2rem;
-    color: #343a40;
-    text-align: center;
-    margin-bottom: 2rem;
+/* === Recruiter-specific Results === */
+.result-card {
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.analyzer-page .subtitle {
-    text-align: center;
+.result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.result-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #343a40;
+}
+
+.result-card p {
+    margin: 0;
     color: #6c757d;
-    margin-bottom: 2rem;
+    text-align: right;
 }
 
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-    color: #495057;
-}
-
-textarea,
-input[type="file"] {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 1rem;
-    box-sizing: border-box;
-}
-
-.analyzer-page button,
-.recruiter-page button.cta-button {
-    display: block;
-    width: 100%;
-    padding: 0.8rem;
-    border-radius: 4px;
-    background-color: #007bff;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.analyzer-page button:hover:not(:disabled),
-.recruiter-page button.cta-button:hover:not(:disabled) {
-    background-color: #0056b3;
-}
-
-.analyzer-page button:disabled,
-.recruiter-page button.cta-button:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-}
-
-/* === Results Section (Generic) === */
-.results-section h2 {
-    font-size: 2rem;
-    color: #343a40;
-    text-align: center;
-    margin-bottom: 2rem;
+.result-card strong {
+    color: #007bff;
+    font-size: 1.2rem;
 }
 
 /* === Analyzer-specific Results === */
@@ -360,38 +633,180 @@ pre {
     background-color: #28a745;
 }
 
-/* === Recruiter-specific Results === */
-.result-card {
-    background-color: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+/*
+============================================
+        STYLES RESPONSIVES
+============================================
+*/
+
+/* === Tablettes & Petits Ordinateurs (max-width: 992px) === */
+@media (max-width: 992px) {
+    .container {
+        padding: 0 1.5rem;
+    }
+
+    .hero-content h1 {
+        font-size: 3rem;
+    }
+
+    .hero-content p {
+        font-size: 1.15rem;
+    }
+
+    .features-section, .recruiter-cta-section {
+        padding: 5rem 1.5rem;
+    }
+
+    .features-section h2, .recruiter-cta-section h2 {
+        font-size: 2.2rem;
+    }
+
+    nav {
+        padding: 0 1.5rem;
+    }
 }
 
-.result-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+/* === Mobiles (max-width: 768px) === */
+@media (max-width: 768px) {
+    body {
+        font-size: 16px;
+    }
+
+    .main-header {
+        padding: 0 1rem;
+    }
+
+    nav {
+        padding: 0;
+    }
+    
+    nav .logo {
+        font-size: 1.3rem;
+    }
+
+    nav .logo img {
+        height: 35px;
+    }
+
+    .nav-links {
+        display: none; /* Caché par défaut */
+        flex-direction: column;
+        position: absolute;
+        top: 80px;
+        left: 0;
+        width: 100%;
+        background-color: #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        border-top: 1px solid #eee;
+    }
+
+    .nav-links.active {
+        display: flex; /* Affiché avec JS */
+    }
+
+    .nav-links li {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .nav-links li:last-child {
+        border-bottom: none;
+    }
+
+    .nav-links a {
+        display: block;
+        padding: 1.5rem;
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .nav-toggle {
+        display: block; /* Afficher le bouton hamburger */
+        font-size: 1.5rem;
+        background: none;
+        border: none;
+        color: #333;
+        cursor: pointer;
+    }
+
+    .hero-section {
+        padding: 5rem 1.5rem;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .hero-buttons .cta-button, .hero-buttons .cta-button-outline {
+        width: 100%;
+        max-width: 300px;
+        margin: 0;
+    }
+
+    .features-section, .recruiter-cta-section {
+        padding: 4rem 1.5rem;
+    }
+
+    .auth-box {
+        padding: 2rem;
+        margin: 1rem;
+    }
+
+    .analyzer-page .container, .recruiter-page .container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+
+    .result-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+
+    .result-card p {
+        text-align: left;
+    }
 }
 
-.result-card h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #343a40;
-}
+/* === Petits Mobiles (max-width: 480px) === */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 1rem;
+    }
 
-.result-card p {
-    margin: 0;
-    color: #6c757d;
-    text-align: right;
-}
+    .hero-content h1 {
+        font-size: 2.2rem;
+    }
 
-.result-card strong {
-    color: #007bff;
-    font-size: 1.2rem;
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .features-section h2, .recruiter-cta-section h2 {
+        font-size: 1.8rem;
+    }
+
+    .auth-box {
+        padding: 1.5rem;
+    }
+
+    .auth-header h2 {
+        font-size: 1.5rem;
+    }
+
+    #copy-cv-button,
+    #download-pdf-button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
 }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Accès Interdit - CV-Optimizer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
+  <link rel="stylesheet" type="text/css" href="/styles.css">
+</head>
+<body class="error-page">
+  <div class="error-container">
+    <div class="error-code">403</div>
+    <h1>Accès Interdit</h1>
+    <p>Oups ! Il semble que vous n'ayez pas la permission d'accéder à cette page.</p>
+    <a id="redirect-link" href="/" class="cta-button">Retourner à l'accueil</a>
+  </div>
+
+  <script>
+    // Petit script pour rediriger l'utilisateur vers la bonne page si son rôle est connu
+    fetch('/api/user-role')
+      .then(response => response.json())
+      .then(data => {
+        const redirectLink = document.getElementById('redirect-link');
+        if (data.role === 'recruiter') {
+          redirectLink.href = '/recruiter';
+          redirectLink.textContent = 'Aller à mon tableau de bord Recruteur';
+        } else if (data.role === 'job_seeker') {
+          redirectLink.href = '/analyzer';
+          redirectLink.textContent = 'Aller à mon tableau de bord Candidat';
+        }
+      })
+      .catch(() => {
+        // Garder le lien par défaut si l'api échoue
+      });
+  </script>
+</body>
+</html>

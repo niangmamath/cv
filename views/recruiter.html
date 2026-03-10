@@ -3,19 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyse de CVs pour Recruteurs - CV-Optimizer</title>
+    <title>Analyse de CVs pour Recruteurs - Ubuntudigit Talent</title>
+    <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="recruiter-page">
-    <header>
+    <header class="main-header">
         <nav>
-            <a href="/" class="logo">CV-Optimizer</a>
-            <ul>
+            <a href="/" class="logo">
+                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
+                <span>Ubuntudigit Talent</span>
+            </a>
+            <ul class="nav-links">
                 <li><a href="/">Accueil</a></li>
-                <li><a href="/analyzer">Analyseur</a></li>
                 <li><a href="/recruiter">Espace Recruteur</a></li>
+                <li><a href="/logout">Déconnexion</a></li>
             </ul>
+            <button class="nav-toggle"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
@@ -25,19 +30,29 @@
             <p class="subtitle">Importez les CVs de vos candidats et l'offre d'emploi pour obtenir un classement basé sur la compatibilité.</p>
             <form id="recruiter-form" action="/analyze-resumes" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label for="job-description">Description de l'offre d'emploi</label>
-                    <textarea id="job-description" name="jobDescription" rows="10" placeholder="Collez ici la description complète du poste..."></textarea>
+                    <label for="jobDescription">Description de l'offre d'emploi</label>
+                    <textarea id="jobDescription" name="jobDescription" rows="8" placeholder="Copiez et collez ici la description du poste..."></textarea>
+                    <p style="text-align:center; margin: 1rem 0; color: #777;">OU</p>
+                    <label for="jobDescriptionFile">Téléversez une description de poste (PDF, TXT)</label>
+                    <input type="file" id="jobDescriptionFile" name="jobDescriptionFile" accept=".pdf,.txt">
                 </div>
                 <div class="form-group">
                     <label for="cv-files">CV des candidats (multiples fichiers acceptés)</label>
-                    <input type="file" id="cv-files" name="cvs" multiple accept=".pdf,.doc,.docx">
+                    <input type="file" id="cv-files" name="cvs" multiple accept=".pdf,.doc,.docx" required>
+                </div>
+                 <div class="privacy-notice">
+                    <i class="fas fa-lock"></i>
+                    <span>Pour garantir votre confidentialité, vos documents sont analysés de manière sécurisée et ne sont jamais stockés sur nos serveurs.</span>
                 </div>
                 <button type="submit">Analyser les CVs</button>
             </form>
         </section>
 
         <section class="results-section" style="display:none;">
-            <h2>Résultats de l'analyse</h2>
+            <div class="results-header">
+                <h2>Résultats de l'analyse</h2>
+                <button id="download-results-pdf"><i class="fas fa-download"></i> Télécharger les résultats en PDF</button>
+            </div>
             <div id="results-container">
                 <!-- Les résultats seront injectés ici -->
             </div>
@@ -45,19 +60,35 @@
     </div>
 
     <footer>
-        <p>&copy; 2024 CV-Optimizer. Tous droits réservés.</p>
+        <p>&copy; 2024 Ubuntudigit Talent. Tous droits réservés.</p>
     </footer>
 
     <script>
+        const navToggle = document.querySelector('.nav-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
         const form = document.getElementById('recruiter-form');
         const analysisFormSection = document.querySelector('.analysis-form-section');
         const resultsSection = document.querySelector('.results-section');
         const resultsContainer = document.getElementById('results-container');
         const submitButton = form.querySelector('button[type="submit"]');
+        let analysisResults = [];
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const jobDescriptionText = document.getElementById('jobDescription').value;
+            const jobDescriptionFile = document.getElementById('jobDescriptionFile').files.length > 0;
+
+            if (!jobDescriptionText && !jobDescriptionFile) {
+                alert("Veuillez coller la description de l'offre ou téléverser un fichier.");
+                return;
+            }
+
             const formData = new FormData(form);
             submitButton.disabled = true;
             submitButton.innerText = 'Analyse en cours...';
@@ -74,23 +105,23 @@
                     throw new Error(errorData.error || "Une erreur s'est produite lors de l'analyse.");
                 }
 
-                const results = await response.json();
+                analysisResults = await response.json();
                 
                 analysisFormSection.style.display = 'none';
                 resultsSection.style.display = 'block';
 
                 resultsContainer.innerHTML = '';
 
-                if (results.length === 0) {
+                if (analysisResults.length === 0) {
                     resultsContainer.innerHTML = '<p>Aucun CV analysé ou tous les CV étaient invalides.</p>';
                 } else {
-                    results.sort((a, b) => b.score - a.score).forEach((result, index) => {
+                    analysisResults.sort((a, b) => b.score - a.score).forEach((result, index) => {
                         const resultElement = document.createElement('div');
                         resultElement.classList.add('result-card');
                         resultElement.innerHTML = `
                             <h3>${result.filename}</h3>
                             <p>Classement: <strong>#${index + 1}</strong></p>
-                            <p>Score: <strong>${result.score}%</strong></p>
+                            <p>Score: <strong>#${result.score}%</strong></p>
                         `;
                         resultsContainer.appendChild(resultElement);
                     });
@@ -104,6 +135,51 @@
                 submitButton.innerText = 'Analyser les CVs';
             }
         });
+
+        document.getElementById('download-results-pdf').addEventListener('click', async function() {
+            const downloadButton = this;
+            downloadButton.disabled = true;
+            downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération du PDF...';
+
+            const jobDescription = document.getElementById('job-description').value;
+
+            try {
+                const response = await fetch('/download-recruiter-results-pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        results: analysisResults, 
+                        jobDescription: jobDescription
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur du serveur: ${errorText}`);
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'resultats-analyse-cv.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+            } catch (error) {
+                console.error('Erreur de téléchargement:', error);
+                alert('Le téléchargement a échoué. \n' + error.message);
+            } finally {
+                downloadButton.disabled = false;
+                downloadButton.innerHTML = '<i class="fas fa-download"></i> Télécharger les résultats en PDF';
+            }
+        });
+
     </script>
 </body>
 </html>

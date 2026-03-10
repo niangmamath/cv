@@ -3,19 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyseur de CV par IA</title>
+    <title>Analyseur de CV - Ubuntudigit Talent</title>
+    <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="analyzer-page">
-    <header>
+    <header class="main-header">
         <nav>
-            <a href="/" class="logo">CV-Optimizer</a>
-            <ul>
+            <a href="/" class="logo">
+                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
+                <span>Ubuntudigit Talent</span>
+            </a>
+            <ul class="nav-links">
                 <li><a href="/">Accueil</a></li>
                 <li><a href="/analyzer">Analyseur</a></li>
-                <li><a href="/recruiter">Espace Recruteur</a></li>
+                <li><a href="/logout">Déconnexion</a></li>
             </ul>
+            <button class="nav-toggle"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
@@ -26,11 +31,18 @@
         <form id="analysis-form" action="/analyze" method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="jobDescription">Description de l'offre d'emploi</label>
-                <textarea id="jobDescription" name="jobDescription" rows="10" placeholder="Copiez et collez ici la description du poste..." required></textarea>
+                <textarea id="jobDescription" name="jobDescription" rows="8" placeholder="Copiez et collez ici la description du poste..."></textarea>
+                <p style="text-align:center; margin: 1rem 0; color: #777;">OU</p>
+                <label for="jobDescriptionFile">Téléversez une description de poste (PDF, TXT)</label>
+                <input type="file" id="jobDescriptionFile" name="jobDescriptionFile" accept=".pdf,.txt">
             </div>
             <div class="form-group">
                 <label for="cv">Téléverser un CV (PDF)</label>
                 <input type="file" id="cv" name="cv" accept=".pdf" required>
+            </div>
+            <div class="privacy-notice">
+                <i class="fas fa-lock"></i>
+                <span>Pour garantir votre confidentialité, vos documents sont analysés de manière sécurisée et ne sont jamais stockés sur nos serveurs.</span>
             </div>
             <button type="submit">Analyser et optimiser mon CV</button>
         </form>
@@ -66,6 +78,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
+        const navToggle = document.querySelector('.nav-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
         function animateScore(finalScore) {
             const scoreCircle = document.querySelector('.score-circle');
             const scoreValueElement = document.getElementById('score-value');
@@ -88,6 +107,14 @@
 
         document.getElementById('analysis-form').addEventListener('submit', async function(event) {
             event.preventDefault();
+
+            const jobDescriptionText = document.getElementById('jobDescription').value;
+            const jobDescriptionFile = document.getElementById('jobDescriptionFile').files.length > 0;
+
+            if (!jobDescriptionText && !jobDescriptionFile) {
+                alert("Veuillez coller la description de l'offre ou téléverser un fichier.");
+                return;
+            }
 
             const form = event.target;
             const formData = new FormData(form);
@@ -114,7 +141,6 @@
                     throw new Error(errorText);
                 }
                 
-                // Animer le score
                 animateScore(data.score);
 
                 analysisResult.innerHTML = marked.parse(data.analysis);
@@ -123,7 +149,7 @@
                 resultsContainer.style.display = 'block';
 
             } catch (error) {
-                console.error('Erreur lors de l\'analyse:', error);
+                console.error('Erreur lors de l_analyse:', error);
                 analysisResult.innerHTML = `<p style="color: red;">${error.message}</p>`;
                 resultsContainer.style.display = 'block';
             } finally {

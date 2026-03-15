@@ -159,20 +159,31 @@
                 if (analysisResults.length === 0) {
                     resultsContainer.innerHTML = '<p>Aucun CV analysé ou tous les CV étaient invalides.</p>';
                 } else {
-                    // Note: The backend already sorts the results.
-                    analysisResults.forEach((result, index) => {
+                    analysisResults.forEach(result => {
                         const resultElement = document.createElement('div');
                         resultElement.classList.add('result-card');
                         resultElement.innerHTML = `
                             <div class="result-card-header">
                                 <span class="rank">#${result.rank}</span>
                                 <h3 class="filename">${result.filename}</h3>
-                            </div>
-                            <div class="result-card-body">
                                 <div class="score-dial" style="--score: ${result.score}">
                                     <span>${result.score}%</span>
                                 </div>
-                                ${result.error ? `<p class="error-message">Erreur: ${result.error}</p>` : ''}
+                            </div>
+                            <div class="result-card-body">
+                                <button class="toggle-details-btn">Voir les détails</button>
+                                <div class="analysis-details" style="display: none;">
+                                    <h4>Détails de l\'analyse</h4>
+                                    <div class="strengths">
+                                        <h5><i class="fas fa-check-circle"></i> Points Forts</h5>
+                                        <p>${result.strengths || 'Aucun point fort notable détecté.'}</p>
+                                    </div>
+                                    <div class="weaknesses">
+                                        <h5><i class="fas fa-times-circle"></i> Points Faibles</h5>
+                                        <p>${result.weaknesses || 'Aucun point faible notable détecté.'}</p>
+                                    </div>
+                                     ${result.error ? `<p class="error-message">Erreur: ${result.error}</p>` : ''}
+                                </div>
                             </div>
                         `;
                         resultsContainer.appendChild(resultElement);
@@ -185,8 +196,21 @@
                  resultsSection.style.display = 'block';
                  resultsContainer.innerHTML = `<p style="color:red;">${error.message}</p>`;
             } finally {
-                // Re-check status to update the remaining count and button state
                 checkUserStatus();
+            }
+        });
+
+        // Event listener for the toggle buttons (using event delegation)
+        resultsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('toggle-details-btn')) {
+                const details = e.target.nextElementSibling;
+                if (details.style.display === 'none') {
+                    details.style.display = 'block';
+                    e.target.textContent = 'Masquer les détails';
+                } else {
+                    details.style.display = 'none';
+                    e.target.textContent = 'Voir les détails';
+                }
             }
         });
 
@@ -195,7 +219,6 @@
             downloadButton.disabled = true;
             downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération du PDF...';
 
-            // Make sure to get the current job description value
             const jobDescription = document.getElementById('jobDescription').value;
 
             try {

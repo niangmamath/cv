@@ -541,41 +541,141 @@ input:focus, textarea:focus, select:focus {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* === Recruiter-specific Results === */
+/* === Recruiter-specific Results (Updated) === */
+.recruiter-page .results-section {
+    margin-top: 2rem;
+}
+
 .result-card {
     background-color: #fff;
     border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.3s ease;
+    overflow: hidden; /* Ensures child elements respect border radius */
 }
 
 .result-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.result-card h3 {
-    margin: 0;
+.result-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.result-card-header .rank {
     font-size: 1.2rem;
-    color: #343a40;
-}
-
-.result-card p {
-    margin: 0;
-    color: #6c757d;
-    text-align: right;
-}
-
-.result-card strong {
+    font-weight: 700;
     color: #007bff;
-    font-size: 1.2rem;
 }
+
+.result-card-header .filename {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0;
+    flex-grow: 1;
+    margin-left: 1.5rem;
+}
+
+.score-dial {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: conic-gradient(#007bff calc(var(--score, 0) * 1%), #e9ecef 0);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #343a40;
+    flex-shrink: 0;
+}
+
+.score-dial span {
+    background: #f8f9fa;
+    width: 85%;
+    height: 85%;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.result-card-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.toggle-details-btn {
+    background-color: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+    margin: 0 auto; /* Center the button */
+    display: inline-block;
+    width: auto; /* Override general button width */
+}
+
+.toggle-details-btn:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.analysis-details {
+    margin-top: 1.5rem;
+    text-align: left;
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+}
+
+.analysis-details h4 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.analysis-details h5 {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.analysis-details .strengths h5 {
+    color: #28a745;
+}
+
+.analysis-details .weaknesses h5 {
+    color: #dc3545;
+}
+
+.analysis-details p {
+    color: #555;
+    margin: 0 0 1.5rem 0;
+    padding-left: 28px; /* Indent text to align with icon */
+    font-size: 0.95rem;
+}
+
+.error-message {
+    color: #dc3545;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 1rem;
+}
+
 
 /* === Analyzer-specific Results === */
 .analyzer-page #results-container {
@@ -772,8 +872,15 @@ pre {
         gap: 0.8rem;
     }
 
-    .result-card p {
-        text-align: left;
+    .result-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .score-dial {
+        align-self: center;
     }
 }
 

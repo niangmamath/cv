@@ -227,10 +227,13 @@ const analyzeUploads = upload.fields([
     { name: 'cv', maxCount: 1 },
     { name: 'jobDescriptionFile', maxCount: 1 }
 ]);
+
+// --- START OF MODIFIED JOBSEEKER ROUTE ---
 app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (req, res) => {
     let jobDescription;
     const cvFile = req.files.cv ? req.files.cv[0] : null;
     const jobDescriptionFile = req.files.jobDescriptionFile ? req.files.jobDescriptionFile[0] : null;
+    const selectedTone = req.body.tone || 'Professionnel'; // Default to Professionnel
 
     try {
         const user = await User.findById(req.session.userId);
@@ -263,6 +266,7 @@ app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (r
              return res.status(400).json({ error: "Impossible de lire le contenu du CV." });
         }
 
+        // --- MODIFICATION: Added tone to the prompt ---
         const prompt = `
             Analysez le CV fourni par rapport à la description de poste. Votre réponse doit être uniquement un objet JSON valide, sans texte ou explication supplémentaire.
             L'objet JSON doit avoir la structure suivante :
@@ -270,7 +274,7 @@ app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (r
               "score": <Un pourcentage (0-100) représentant la compatibilité du CV avec la description du poste>,
               "analysis": "<Une analyse détaillée du CV. Fournissez des suggestions concrètes d'amélioration, des reformulations et des conseils pour mieux correspondre à l'offre. Utilisez le markdown pour la mise en forme.>",
               "keywords": "<Une liste de mots-clés et de phrases importants manquants dans le CV qui sont cruciaux pour passer les systèmes de suivi des candidats (ATS).>",
-              "rewritten_cv": "<Réécrivez complètement le CV pour l'aligner parfaitement avec la description de poste. Votre tâche est de reformuler les descriptions de poste, les compétences et les résumés en utilisant un langage percutant et en intégrant stratégiquement les mots-clés de la description de poste. Basez-vous uniquement sur les informations du CV original et n'inventez aucune information. L'objectif est de produire un CV optimisé pour les ATS, prêt à l'emploi. Le résultat doit être le texte complet et professionnel du CV révisé.>"
+              "rewritten_cv": "<Réécrivez complètement le CV pour l'aligner parfaitement avec la description de poste. Utilisez un ton ${selectedTone}. Votre tâche est de reformuler les descriptions de poste, les compétences et les résumés en utilisant un langage percutant et en intégrant stratégiquement les mots-clés de la description de poste. Basez-vous uniquement sur les informations du CV original et n'inventez aucune information. L'objectif est de produire un CV optimisé pour les ATS, prêt à l'emploi. Le résultat doit être le texte complet et professionnel du CV révisé.>"
             }
 
             **Description de poste :**
@@ -284,7 +288,7 @@ app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (r
             model: "gpt-4o",
             messages: [{ "role": "user", "content": prompt }],
             response_format: { type: "json_object" },
-            temperature: 0,
+            temperature: 0.2, // Slightly increase temperature for nuanced tones
         });
 
         const rawResponse = completion.choices[0].message.content;
@@ -297,11 +301,15 @@ app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (r
         res.status(500).json({ error: error.message || "Une erreur est survenue lors de l'analyse du CV." });
     }
 });
+// --- END OF MODIFIED JOBSEEKER ROUTE ---
+
 
 const recruiterUploads = upload.fields([
     { name: 'cvs' },
     { name: 'jobDescriptionFile', maxCount: 1 }
 ]);
+
+// --- Recruiter route remains unchanged ---
 app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads, async (req, res) => {
     let jobDescription;
     const cvFiles = req.files.cvs || [];
@@ -333,16 +341,23 @@ app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads
             return res.status(400).json({ error: "Au moins un CV est requis." });
         }
 
-        const analysisPromises = cvFiles.map(async (file) => {
+        const results = [];
+        for (const file of cvFiles) {
             try {
                 const cvText = await getTextFromFile(file); 
                 if (!cvText) {
-                    return { filename: file.originalname, score: 0, error: "Impossible de lire le fichier." };
+                    results.push({ filename: file.originalname, score: 0, error: "Impossible de lire le fichier.", strengths: "", weaknesses: "" });
+                    continue;
                 }
 
                 const prompt = `
-                    Analysez le CV suivant par rapport à la description de poste et retournez un score de compatibilité en pourcentage.
-                    Votre réponse DOIT être un objet JSON contenant uniquement la clé \"score\". Par exemple: {\"score\": 85}.
+                    Analysez le CV suivant par rapport à la description de poste.
+                    Votre réponse DOIT être un objet JSON valide sans texte ou explication supplémentaire, avec la structure suivante :
+                    {
+                      "score": <Un pourcentage (0-100) de compatibilité>,
+                      "strengths": "<Un résumé concis des 2-3 points forts principaux du CV par rapport au poste>",
+                      "weaknesses": "<Un résumé concis des 2-3 points faibles ou des manques principaux du CV par rapport au poste>"
+                    }
 
                     **Description de poste :**
                     ${jobDescription}
@@ -361,17 +376,19 @@ app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads
                 const rawResponse = completion.choices[0].message.content;
                 const structuredResponse = JSON.parse(rawResponse);
 
-                return {
+                results.push({
                     filename: file.originalname,
                     score: structuredResponse.score,
-                };
+                    strengths: structuredResponse.strengths,
+                    weaknesses: structuredResponse.weaknesses,
+                });
+
             } catch (singleFileError) {
                 console.error(`Failed to process ${file.originalname}:`, singleFileError);
-                return { filename: file.originalname, score: 0, error: singleFileError.message };
+                results.push({ filename: file.originalname, score: 0, error: singleFileError.message, strengths: "", weaknesses: "" });
             }
-        });
+        }
 
-        const results = await Promise.all(analysisPromises);
         results.sort((a, b) => b.score - a.score);
         const rankedResults = results.map((result, index) => ({ ...result, rank: index + 1 }));
 
@@ -406,44 +423,43 @@ app.post('/download-recruiter-results-pdf', authorizeUser, authorizeRecruiter, (
 
         doc.pipe(res);
 
-        // --- En-tête du document ---
         doc.font('Helvetica-Bold').fontSize(20).text('Rapport d\'analyse des CVs', { align: 'center' });
         doc.moveDown(2);
 
-        // --- Informations sur le poste ---
         doc.font('Helvetica-Bold').fontSize(14).text('Poste Visé');
         doc.font('Helvetica').fontSize(10).text(jobDescription || 'Non spécifiée');
         doc.moveDown(2);
 
-        // --- Tableau des résultats ---
         doc.font('Helvetica-Bold').fontSize(14).text('Classement des Candidats');
         doc.moveDown();
 
-        // En-têtes du tableau
-        const tableTop = doc.y;
-        const itemX = 72;
-        const rankX = itemX;
-        const filenameX = rankX + 100;
-        const scoreX = filenameX + 250;
+        results.forEach((result) => {
+            doc.font('Helvetica-Bold').fontSize(12)
+               .text(`Rang: #${result.rank} | Score: ${result.score}% | Fichier: ${result.filename}`);
+            doc.moveDown(0.5);
 
-        doc.fontSize(10).font('Helvetica-Bold');
-        doc.text('Rang', rankX, tableTop);
-        doc.text('Nom du Fichier', filenameX, tableTop);
-        doc.text('Score', scoreX, tableTop, { width: 100, align: 'right' });
-        doc.font('Helvetica');
+            doc.font('Helvetica-Bold').fontSize(10).text('Points Forts:');
+            doc.font('Helvetica').fontSize(10)
+               .list([result.strengths || 'Non spécifié'], {
+                bulletRadius: 2,
+                indent: 15,
+                textIndent: 8,
+                lineGap: 4
+            });
+            doc.moveDown(0.5);
 
-        // Ligne de séparation
-        doc.moveTo(itemX, doc.y + 5).lineTo(520, doc.y + 5).stroke();
-        doc.moveDown();
-
-        // Lignes du tableau
-        results.forEach((result, index) => {
-            const rowY = doc.y;
-            doc.fontSize(10);
-            doc.text(`#${result.rank}`, rankX, rowY);
-            doc.text(result.filename, filenameX, rowY, { width: 230 });
-            doc.text(`${result.score}%`, scoreX, rowY, { width: 100, align: 'right' });
-            doc.moveDown(1.5);
+            doc.font('Helvetica-Bold').fontSize(10).text('Points Faibles:');
+            doc.font('Helvetica').fontSize(10)
+               .list([result.weaknesses || 'Non spécifié'], {
+                bulletRadius: 2,
+                indent: 15,
+                textIndent: 8,
+                lineGap: 4
+            });
+            
+            doc.moveDown(1);
+            doc.strokeColor("#aaaaaa").lineWidth(0.5).moveTo(72, doc.y).lineTo(523, doc.y).stroke();
+            doc.moveDown(1);
         });
 
         doc.end();

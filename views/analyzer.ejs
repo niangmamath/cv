@@ -28,6 +28,8 @@
         <h1>Analyseur de CV par IA</h1>
         <p class="subtitle">Obtenez un score de compatibilité, des conseils d'amélioration et une version de votre CV optimisée pour le poste.</p>
         
+        <div id="user-status-container" class="user-status-container"></div>
+
         <form id="analysis-form" action="/analyze" method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="jobDescription">Description de l'offre d'emploi</label>
@@ -78,12 +80,52 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserStatus();
+        });
+
         const navToggle = document.querySelector('.nav-toggle');
         const navLinks = document.querySelector('.nav-links');
 
         navToggle.addEventListener('click', () => {
             navLinks.classList.toggle('active');
         });
+
+        async function checkUserStatus() {
+            const statusContainer = document.getElementById('user-status-container');
+            const submitButton = document.querySelector('#analysis-form button[type="submit"]');
+            const defaultButtonText = 'Analyser et optimiser mon CV';
+
+            try {
+                const response = await fetch('/api/user-status');
+                if (!response.ok) throw new Error('Could not fetch user status.');
+                
+                const data = await response.json();
+                const { analysisCount, maxAnalyses } = data;
+                const remaining = maxAnalyses - analysisCount;
+
+                if (remaining <= 0) {
+                    statusContainer.innerHTML = `
+                        <p class="limit-reached-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Vous avez utilisé toutes vos analyses gratuites (${analysisCount}/${maxAnalyses}).
+                            <a href="https://wa.me/212783346308" target="_blank">Contactez-nous sur WhatsApp</a> pour passer à un plan supérieur.
+                        </p>
+                    `;
+                    submitButton.disabled = true;
+                    submitButton.innerText = 'Quota atteint';
+                } else {
+                    statusContainer.innerHTML = `<p>Analyses restantes : ${remaining} / ${maxAnalyses}</p>`;
+                    submitButton.disabled = false;
+                    submitButton.innerText = defaultButtonText;
+                }
+            } catch (error) {
+                console.error('Error checking user status:', error);
+                statusContainer.innerHTML = `<p style="color:red;">Impossible de vérifier votre statut de quota.</p>`;
+                submitButton.disabled = true; // Disable if we can't verify status
+                submitButton.innerText = 'Erreur de vérification';
+            }
+        }
 
         function animateScore(finalScore) {
             const scoreCircle = document.querySelector('.score-circle');
@@ -151,10 +193,16 @@
             } catch (error) {
                 console.error('Erreur lors de l_analyse:', error);
                 analysisResult.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                // Display results container to show the error message
                 resultsContainer.style.display = 'block';
+                // Clear other results fields
+                document.getElementById('score-value').textContent = "0%";
+                keywordsResult.textContent = "";
+                rewrittenCvResult.textContent = "";
+
             } finally {
-                submitButton.disabled = false;
-                submitButton.innerText = 'Analyser et optimiser mon CV';
+                // Re-check status to update the remaining count and button state
+                checkUserStatus();
             }
         });
 

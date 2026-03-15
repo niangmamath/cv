@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Administrateur - Ubuntudigit Talent</title>
+    <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
+    <link rel="stylesheet" href="/styles.css?v=4">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body class="dashboard-page admin-dashboard">
+
+    <header class="dashboard-header">
+        <div class="logo">
+            <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
+            <span>Espace Administrateur</span>
+        </div>
+        <nav>
+            <a href="/logout" class="logout-button"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="dashboard-title">
+            <h1><i class="fas fa-tachometer-alt"></i> Tableau de Bord</h1>
+            <p>Gestion complète des utilisateurs de la plateforme.</p>
+        </div>
+
+        <div class="user-list-container card">
+            <div class="card-header">
+                <h2><i class="fas fa-users"></i> Liste des Utilisateurs Enregistrés</h2>
+                 <div class="user-count">
+                    <span class="count-number"><%= users.length %></span> utilisateurs
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-user"></i> Nom d'utilisateur</th>
+                            <th><i class="fas fa-envelope"></i> Email</th>
+                            <th><i class="fas fa-user-tag"></i> Rôle</th>
+                            <th><i class="fas fa-chart-bar"></i> Utilisation</th>
+                            <th><i class="fas fa-calendar-alt"></i> Date d'inscription</th>
+                            <th><i class="fas fa-cogs"></i> Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(users.length > 0) { %>
+                            <% users.forEach(user => { %>
+                                <tr>
+                                    <td><%= user.username %></td>
+                                    <td><a href="mailto:<%= user.email %>"><%= user.email %></a></td>
+                                    <td>
+                                        <span class="role-badge role-<%= user.role.replace('_', '-') %>">
+                                            <% if (user.role === 'recruiter') { %>
+                                                <i class="fas fa-user-tie"></i>
+                                            <% } else { %>
+                                                <i class="fas fa-user-graduate"></i>
+                                            <% } %>
+                                            <%= user.role.replace('_', ' ') %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="analysis-count <%= (user.analysisCount >= user.maxAnalyses) ? 'limit-reached' : '' %>">
+                                            <%= user.analysisCount %> / <%= user.maxAnalyses %>
+                                        </span>
+                                    </td>
+                                    <td><%= new Date(user.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) %></td>
+                                    <td>
+                                        <form action="/admin/update-quota" method="POST" class="quota-form">
+                                            <input type="hidden" name="userId" value="<%= user._id %>">
+                                            <input type="number" name="newQuota" min="0" value="<%= user.maxAnalyses %>" class="quota-input" title="Nouveau quota maximal">
+                                            <button type="submit" class="quota-submit-btn" title="Sauvegarder le quota"><i class="fas fa-save"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="no-users-message">Aucun utilisateur n'est actuellement enregistré sur la plateforme.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

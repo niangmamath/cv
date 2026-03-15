@@ -28,6 +28,9 @@
         <section class="analysis-form-section">
             <h2>Lancer une nouvelle analyse</h2>
             <p class="subtitle">Importez les CVs de vos candidats et l'offre d'emploi pour obtenir un classement basé sur la compatibilité.</p>
+            
+            <div id="user-status-container" class="user-status-container"></div>
+
             <form id="recruiter-form" action="/analyze-resumes" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="jobDescription">Description de l'offre d'emploi</label>
@@ -64,12 +67,52 @@
     </footer>
 
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserStatus();
+        });
+
         const navToggle = document.querySelector('.nav-toggle');
         const navLinks = document.querySelector('.nav-links');
 
         navToggle.addEventListener('click', () => {
             navLinks.classList.toggle('active');
         });
+
+        async function checkUserStatus() {
+            const statusContainer = document.getElementById('user-status-container');
+            const submitButton = document.querySelector('#recruiter-form button[type="submit"]');
+            const defaultButtonText = 'Analyser les CVs';
+
+            try {
+                const response = await fetch('/api/user-status');
+                if (!response.ok) throw new Error('Could not fetch user status.');
+                
+                const data = await response.json();
+                const { analysisCount, maxAnalyses } = data;
+                const remaining = maxAnalyses - analysisCount;
+
+                if (remaining <= 0) {
+                    statusContainer.innerHTML = `
+                        <p class="limit-reached-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Vous avez utilisé toutes vos analyses gratuites (${analysisCount}/${maxAnalyses}).
+                            <a href="https://wa.me/212783346308" target="_blank">Contactez-nous sur WhatsApp</a> pour passer à un plan supérieur.
+                        </p>
+                    `;
+                    submitButton.disabled = true;
+                    submitButton.innerText = 'Quota atteint';
+                } else {
+                    statusContainer.innerHTML = `<p>Analyses restantes : ${remaining} / ${maxAnalyses}</p>`;
+                    submitButton.disabled = false;
+                    submitButton.innerText = defaultButtonText;
+                }
+            } catch (error) {
+                console.error('Error checking user status:', error);
+                statusContainer.innerHTML = `<p style="color:red;">Impossible de vérifier votre statut de quota.</p>`;
+                submitButton.disabled = true; // Disable if we can't verify status
+                submitButton.innerText = 'Erreur de vérification';
+            }
+        }
 
         const form = document.getElementById('recruiter-form');
         const analysisFormSection = document.querySelector('.analysis-form-section');
@@ -100,12 +143,13 @@
                     body: formData
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "Une erreur s'est produite lors de l'analyse.");
+                    throw new Error(data.error || "Une erreur s'est produite lors de l'analyse.");
                 }
 
-                analysisResults = await response.json();
+                analysisResults = data;
                 
                 analysisFormSection.style.display = 'none';
                 resultsSection.style.display = 'block';
@@ -115,13 +159,21 @@
                 if (analysisResults.length === 0) {
                     resultsContainer.innerHTML = '<p>Aucun CV analysé ou tous les CV étaient invalides.</p>';
                 } else {
-                    analysisResults.sort((a, b) => b.score - a.score).forEach((result, index) => {
+                    // Note: The backend already sorts the results.
+                    analysisResults.forEach((result, index) => {
                         const resultElement = document.createElement('div');
                         resultElement.classList.add('result-card');
                         resultElement.innerHTML = `
-                            <h3>${result.filename}</h3>
-                            <p>Classement: <strong>#${index + 1}</strong></p>
-                            <p>Score: <strong>#${result.score}%</strong></p>
+                            <div class="result-card-header">
+                                <span class="rank">#${result.rank}</span>
+                                <h3 class="filename">${result.filename}</h3>
+                            </div>
+                            <div class="result-card-body">
+                                <div class="score-dial" style="--score: ${result.score}">
+                                    <span>${result.score}%</span>
+                                </div>
+                                ${result.error ? `<p class="error-message">Erreur: ${result.error}</p>` : ''}
+                            </div>
                         `;
                         resultsContainer.appendChild(resultElement);
                     });
@@ -130,9 +182,11 @@
             } catch (error) {
                 console.error(error);
                 alert(error.message);
+                 resultsSection.style.display = 'block';
+                 resultsContainer.innerHTML = `<p style="color:red;">${error.message}</p>`;
             } finally {
-                submitButton.disabled = false;
-                submitButton.innerText = 'Analyser les CVs';
+                // Re-check status to update the remaining count and button state
+                checkUserStatus();
             }
         });
 
@@ -141,7 +195,8 @@
             downloadButton.disabled = true;
             downloadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération du PDF...';
 
-            const jobDescription = document.getElementById('job-description').value;
+            // Make sure to get the current job description value
+            const jobDescription = document.getElementById('jobDescription').value;
 
             try {
                 const response = await fetch('/download-recruiter-results-pdf', {

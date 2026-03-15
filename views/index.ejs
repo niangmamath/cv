@@ -1,9 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <link rel="stylesheet" type="text/css" href="/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Ubuntudigit Talent - Optimisez votre CV avec l'IA pour les ATS</title>
+    <meta name="description" content="Gagnez un temps précieux dans votre recherche d'emploi. Notre IA analyse votre CV, le compare aux offres d'emploi et l'optimise pour passer les systèmes de suivi des candidats (ATS).">
+    <meta name="keywords" content="optimisation CV, ATS, analyseur de CV, recherche d'emploi, intelligence artificielle, CV, Ubuntudigit, digital, talent, recrutement">
+    <meta name="author" content="Ubuntudigit Talent">
+    <link rel="canonical" href="https://ubuntudigit-talent.com/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ubuntudigit-talent.com/">
+    <meta property="og:title" content="Ubuntudigit Talent - Optimisez votre CV avec l'IA pour les ATS">
+    <meta property="og:description" content="Notre IA analyse et optimise votre CV pour les systèmes de suivi des candidats (ATS), augmentant ainsi vos chances d'obtenir un entretien.">
+    <meta property="og:image" content="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://ubuntudigit-talent.com/">
+    <meta property="twitter:title" content="Ubuntudigit Talent - Optimisez votre CV avec l'IA pour les ATS">
+    <meta property="twitter:description" content="Notre IA analyse et optimise votre CV pour les systèmes de suivi des candidats (ATS), augmentant ainsi vos chances d'obtenir un entretien.">
+    <meta property="twitter:image" content="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png">
+
+    <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
-    <h1>Hello world</h1>
+<body class="home-page">
+
+    <header class="main-header">
+        <nav>
+            <a href="/" class="logo">
+                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
+                <span>Ubuntudigit Talent</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/login">Connexion</a></li>
+                <li><a href="/register" class="cta-button-secondary">S'inscrire</a></li>
+            </ul>
+            <button class="nav-toggle"><i class="fas fa-bars"></i></button>
+        </nav>
+    </header>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Boostez votre recherche d'emploi avec l'IA</h1>
+            <p>Gagnez un temps précieux : notre IA analyse et optimise votre CV pour les systèmes de suivi des candidats (ATS), augmentant ainsi vos chances d'obtenir un entretien.</p>
+            <div class="hero-buttons">
+                <a href="/register" class="cta-button">Commencer gratuitement</a>
+                <a href="/recruiter" class="cta-button-outline">Je suis recruteur</a>
+            </div>
+        </div>
+    </section>
+
+    <main class="features-section">
+        <h2>Pour les Candidats</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>1. Importez votre CV</h3>
+                <p>Téléversez votre CV actuel au format PDF et collez la description du poste que vous visez.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>2. Recevez une analyse</h3>
+                <p>Notre IA évalue la compatibilité de votre CV avec l'offre, identifie les mots-clés manquants et suggère des améliorations.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-file-alt"></i>
+                <h3>3. Obtenez une version optimisée</h3>
+                <p>Recevez une version entièrement réécrite de votre CV, prête à être envoyée aux recruteurs.</p>
+            </div>
+        </div>
+    </main>
+
+    <section class="recruiter-cta-section">
+        <div class="container">
+            <h2>Pour les Recruteurs</h2>
+            <p>Gagnez du temps et identifiez les meilleurs talents plus rapidement. Notre plateforme vous permet d'analyser plusieurs CVs simultanément par rapport à une offre d'emploi et de classer les candidats les plus pertinents.</p>
+            <a href="/recruiter" class="cta-button">Découvrez l'espace recruteur</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Ubuntudigit Talent. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        const navToggle = document.querySelector('.nav-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+    </script>
+
 </body>
 </html>

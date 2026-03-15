@@ -810,3 +810,170 @@ pre {
         margin-bottom: 0.5rem;
     }
 }
+
+/* --- Admin Dashboard Specific Styles -- */
+
+body.admin-dashboard {
+    background-color: #f0f2f5;
+}
+
+.admin-dashboard .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.admin-dashboard .dashboard-main {
+    padding: 2rem;
+}
+
+.dashboard-title {
+    margin-bottom: 2rem;
+}
+
+.dashboard-title h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #333;
+}
+
+.dashboard-title p {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.user-list-container.card {
+    padding: 0;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-count {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #555;
+    background-color: #f0f2f5;
+    padding: 8px 15px;
+    border-radius: 20px;
+}
+
+.user-count .count-number {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #0056b3;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.user-table th, .user-table td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.user-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #444;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.user-table th i {
+    margin-right: 8px;
+    color: #888;
+}
+
+.user-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.user-table tbody tr:hover {
+    background-color: #f5faff;
+}
+
+.user-table td a {
+    font-weight: 500;
+    color: #0056b3;
+    text-decoration: none;
+}
+.user-table td a:hover {
+    text-decoration: underline;
+}
+
+.no-users-message {
+    text-align: center;
+    padding: 3rem;
+    color: #777;
+    font-style: italic;
+}
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+}
+
+.role-badge.role-admin {
+    background-color: #ffefeb;
+    color: #d93025;
+}
+
+.role-badge.role-recruiter {
+    background-color: #e6f7ff;
+    color: #0056b3;
+}
+
+.role-badge.role-job-seeker {
+    background-color: #e6f4ea;
+    color: #2e7d32;
+}
+.admin-dashboard .dashboard-header .logo img {
+    height: 40px;
+    margin-right: 10px;
+}

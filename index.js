@@ -14,10 +14,30 @@ const User = require('./models/user');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Set EJS as templating engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+
 // --- Database and Admin User Setup ---
 mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('MongoDB connected');
+    const adminUsername = 'admin';
+
+    // Force-reset the admin user to fix the password issue.
+    await User.deleteOne({ username: adminUsername });
+    console.log('Attempting to reset admin user...');
+
+    // Re-create the admin user with the plain password.
+    // The 'pre-save' hook in the User model will hash it automatically.
+    await User.create({
+      username: adminUsername,
+      email: 'admin@ubuntudigit-talent.com',
+      password: 'admin2140', // Plain password
+      role: 'admin'
+    });
+    console.log('Admin user has been reset. The password is now "admin2140".');
   })
   .catch(err => console.error("Erreur de connexion à MongoDB:", err));
 
@@ -26,9 +46,9 @@ const upload = multer({ dest: 'uploads/' });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // --- Middleware ---
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'une_cle_secrete_par_defaut',
   resave: false,
@@ -82,26 +102,41 @@ const authorizeUser = (req, res, next) => {
     next();
 };
 
+const authorizeApi = (req, res, next) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: 'Authentication required. Please log in.' });
+    }
+    next();
+};
+
 const authorizeJobSeeker = (req, res, next) => {
     if (req.session.role !== 'job_seeker') {
-        return res.status(403).sendFile(path.join(__dirname, 'views', '403.html'));
+        return res.status(403).render('403');
     }
     next();
 };
 
 const authorizeRecruiter = (req, res, next) => {
     if (req.session.role !== 'recruiter') {
-        return res.status(403).sendFile(path.join(__dirname, 'views', '403.html'));
+        return res.status(403).render('403');
     }
     next();
+};
+
+const authorizeAdminDashboard = (req, res, next) => {
+    if (req.session.adminId && req.session.role === 'admin') {
+        return next();
+    }
+    res.redirect('/admin/login');
 };
 
 
 // --- Routes --- //
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'views', 'login.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'views', 'register.html')));
+app.get('/', (req, res) => res.render('index'));
+app.get('/login', (req, res) => res.render('login', {error: req.query.error}));
+app.get('/register', (req, res) => res.render('register', {error: req.query.error}));
+app.get('/admin/login', (req, res) => res.render('admin-login', {error: req.query.error}));
 
 app.post('/register', async (req, res) => {
   try {
@@ -116,9 +151,9 @@ app.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (user && await user.comparePassword(password)) {
+    if (user && user.role !== 'admin' && await user.comparePassword(password)) {
       req.session.userId = user._id;
-      req.session.role = user.role; // Stocker le rôle dans la session
+      req.session.role = user.role;
       req.session.save((err) => {
         if (err) return next(err);
         if (user.role === 'recruiter') {
@@ -135,6 +170,26 @@ app.post('/login', async (req, res, next) => {
   }
 });
 
+app.post('/admin/login', async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+
+    if (user && user.role === 'admin' && await user.comparePassword(password)) {
+        req.session.adminId = user._id;
+        req.session.role = user.role;
+        req.session.save((err) => {
+            if (err) return next(err);
+            res.redirect('/admin');
+        });
+    } else {
+      res.redirect('/admin/login?error=1');
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get('/logout', (req, res, next) => {
   req.session.destroy((err) => {
     if (err) return next(err);
@@ -143,8 +198,30 @@ app.get('/logout', (req, res, next) => {
 });
 
 // --- Protected Routes ---
-app.get('/analyzer', authorizeUser, authorizeJobSeeker, (req, res) => res.sendFile(path.join(__dirname, 'views', 'analyzer.html')));
-app.get('/recruiter', authorizeUser, authorizeRecruiter, (req, res) => res.sendFile(path.join(__dirname, 'views', 'recruiter.html')));
+app.get('/analyzer', authorizeUser, authorizeJobSeeker, (req, res) => res.render('analyzer'));
+app.get('/recruiter', authorizeUser, authorizeRecruiter, (req, res) => res.render('recruiter'));
+app.get('/admin', authorizeAdminDashboard, async (req, res) => {
+    try {
+        const users = await User.find({ role: { $ne: 'admin' } });
+        res.render('admin', { users });
+    } catch (error) {
+        res.status(500).send("Error fetching users");
+    }
+});
+
+app.post('/admin/update-quota', authorizeAdminDashboard, async (req, res) => {
+    try {
+        const { userId, newQuota } = req.body;
+        if (!userId || !newQuota) {
+            return res.status(400).send('User ID and new quota are required.');
+        }
+        await User.findByIdAndUpdate(userId, { maxAnalyses: parseInt(newQuota, 10) });
+        res.redirect('/admin');
+    } catch (error) {
+        console.error("Error updating quota:", error);
+        res.status(500).send("Error updating quota");
+    }
+});
 
 const analyzeUploads = upload.fields([
     { name: 'cv', maxCount: 1 },
@@ -156,6 +233,15 @@ app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (r
     const jobDescriptionFile = req.files.jobDescriptionFile ? req.files.jobDescriptionFile[0] : null;
 
     try {
+        const user = await User.findById(req.session.userId);
+        if (user.analysisCount >= user.maxAnalyses) {
+            return res.status(403).json({ 
+                error: "Vous avez atteint votre quota d'analyses. Pour continuer à utiliser notre service, veuillez nous contacter sur WhatsApp pour mettre à niveau votre compte."
+            });
+        }
+
+        User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: 1 } }).exec();
+
         if (!cvFile) {
             if (jobDescriptionFile) await getTextFromFile(jobDescriptionFile); // Cleanup
             return res.status(400).json({ error: "Un fichier de CV est requis." });
@@ -221,11 +307,19 @@ app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads
     const cvFiles = req.files.cvs || [];
     const jobDescriptionFile = req.files.jobDescriptionFile ? req.files.jobDescriptionFile[0] : null;
 
-    // Keep track of files to clean them all up if a fatal error occurs
     const allUploadedFiles = [...cvFiles];
     if (jobDescriptionFile) allUploadedFiles.push(jobDescriptionFile);
 
     try {
+        const user = await User.findById(req.session.userId);
+        if (user.analysisCount >= user.maxAnalyses) {
+            return res.status(403).json({ 
+                error: "Vous avez atteint votre quota d'analyses. Pour continuer à utiliser notre service, veuillez nous contacter sur WhatsApp pour mettre à niveau votre compte."
+            });
+        }
+
+        User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: 1 } }).exec();
+
         if (jobDescriptionFile) {
             jobDescription = await getTextFromFile(jobDescriptionFile);
         } else {
@@ -241,7 +335,7 @@ app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads
 
         const analysisPromises = cvFiles.map(async (file) => {
             try {
-                const cvText = await getTextFromFile(file); // This will also delete the file
+                const cvText = await getTextFromFile(file); 
                 if (!cvText) {
                     return { filename: file.originalname, score: 0, error: "Impossible de lire le fichier." };
                 }
@@ -273,7 +367,6 @@ app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads
                 };
             } catch (singleFileError) {
                 console.error(`Failed to process ${file.originalname}:`, singleFileError);
-                // The file is already deleted by the helper, so we just return the error status
                 return { filename: file.originalname, score: 0, error: singleFileError.message };
             }
         });
@@ -286,8 +379,6 @@ app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads
 
     } catch (error) {
         console.error("Error in /analyze-resumes:", error);
-        // Ensure any remaining files that haven't been processed are cleaned up.
-        // The helper cleans them up one by one, but a top-level error might leave some behind.
         for (const file of allUploadedFiles) {
             if (fs.existsSync(file.path)) {
                 fs.unlinkSync(file.path);
@@ -406,7 +497,23 @@ app.post('/download-pdf', (req, res) => {
 });
 
 // API endpoint to get user role
-app.get('/api/user-role', (req, res) => {
+app.get('/api/user-status', authorizeApi, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId).select('analysisCount maxAnalyses');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+        res.json({
+            analysisCount: user.analysisCount,
+            maxAnalyses: user.maxAnalyses
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching user status.' });
+    }
+});
+
+
+app.get('/api/user-role', authorizeApi, (req, res) => {
     if (req.session.role) {
         res.json({ role: req.session.role });
     } else {
@@ -416,7 +523,7 @@ app.get('/api/user-role', (req, res) => {
 
 // --- Error Handling ---
 app.use((req, res, next) => {
-    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+    res.status(404).render('404');
 });
 
 app.listen(port, () => {

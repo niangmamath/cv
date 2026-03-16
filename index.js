@@ -131,8 +131,8 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
     if (user && user.role !== 'admin' && await user.comparePassword(password)) {
       req.session.userId = user._id;
       res.redirect(user.role === 'recruiter' ? '/recruiter' : '/analyzer');
@@ -181,6 +181,15 @@ app.post('/admin/update-quota', authorizeAdminDashboard, async (req, res) => {
         res.redirect('/admin');
     } catch (error) {
         res.status(500).send("Error updating quota");
+    }
+});
+
+app.post('/admin/delete-user', authorizeAdminDashboard, async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.body.userId);
+        res.redirect('/admin');
+    } catch (error) {
+        res.status(500).send("Error deleting user");
     }
 });
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de Bord Administrateur - Ubuntudigit Talent</title>
     <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
-    <link rel="stylesheet" href="/styles.css?v=4">
+    <link rel="stylesheet" href="/styles.css?v=5">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <meta name="robots" content="noindex, nofollow">
 </head>
@@ -43,7 +43,7 @@
                             <th><i class="fas fa-user-tag"></i> Rôle</th>
                             <th><i class="fas fa-chart-bar"></i> Utilisation</th>
                             <th><i class="fas fa-calendar-alt"></i> Date d'inscription</th>
-                            <th><i class="fas fa-cogs"></i> Action</th>
+                            <th class="actions-column"><i class="fas fa-cogs"></i> Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -68,11 +68,15 @@
                                         </span>
                                     </td>
                                     <td><%= new Date(user.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) %></td>
-                                    <td>
-                                        <form action="/admin/update-quota" method="POST" class="quota-form">
+                                    <td class="actions-cell">
+                                        <form action="/admin/update-quota" method="POST" class="action-form">
                                             <input type="hidden" name="userId" value="<%= user._id %>">
                                             <input type="number" name="newQuota" min="0" value="<%= user.maxAnalyses %>" class="quota-input" title="Nouveau quota maximal">
-                                            <button type="submit" class="quota-submit-btn" title="Sauvegarder le quota"><i class="fas fa-save"></i></button>
+                                            <button type="submit" class="action-btn save-btn" title="Sauvegarder le quota"><i class="fas fa-save"></i></button>
+                                        </form>
+                                        <form action="/admin/delete-user" method="POST" class="action-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');">
+                                            <input type="hidden" name="userId" value="<%= user._id %>">
+                                            <button type="submit" class="action-btn delete-btn" title="Supprimer l'utilisateur"><i class="fas fa-trash-alt"></i></button>
                                         </form>
                                     </td>
                                 </tr>
@@ -87,6 +91,17 @@
             </div>
         </div>
     </main>
-
+<script>
+    // Petit script pour améliorer l'UX des formulaires d'action
+    document.querySelectorAll('.action-form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const btn = this.querySelector('button[type="submit"]');
+            if(btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+            }
+        });
+    });
+</script>
 </body>
 </html>

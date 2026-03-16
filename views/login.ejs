@@ -36,15 +36,15 @@
 
             <form action="/login" method="POST">
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="exemple@email.com" required>
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" placeholder="Votre nom d'utilisateur" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Mot de passe</label>
                     <input type="password" id="password" name="password" placeholder="Votre mot de passe" required>
                 </div>
                 <% if (error) { %>
-                    <p class="error-message" style="text-align:center; margin-bottom: 1rem;">Email ou mot de passe incorrect.</p>
+                    <p class="error-message" style="text-align:center; margin-bottom: 1rem;">Nom d'utilisateur ou mot de passe incorrect.</p>
                 <% } %>
                 <button type="submit" class="cta-button">Se connecter</button>
             </form>

@@ -36,7 +36,18 @@
                                         <li><i class="fas fa-check-circle"></i> <%= feature %></li>
                                     <% }) %>
                                 </ul>
-                                <a href="<%= plan.ctaLink %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
+                                <% 
+                                    let finalCtaLink = plan.ctaLink;
+                                    if (plan.price !== 'Gratuit') {
+                                        if (user) {
+                                            const message = `Bonjour, je suis intéressé(e) par l\'offre '${plan.name}'. Mon nom d\'utilisateur est '${user.username}'.`;
+                                            finalCtaLink = `https://wa.me/212783346308?text=${encodeURIComponent(message)}`;
+                                        } else {
+                                            finalCtaLink = '/login';
+                                        }
+                                    }
+                                %>
+                                <a href="<%= finalCtaLink %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
                             </div>
                         <% }) %>
                     </div>
@@ -60,7 +71,18 @@
                                         <li><i class="fas fa-check-circle"></i> <%= feature %></li>
                                     <% }) %>
                                 </ul>
-                                <a href="<%= plan.ctaLink %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
+                                <% 
+                                    let finalCtaLinkRecruiter = plan.ctaLink;
+                                    if (plan.price !== 'Gratuit') {
+                                        if (user) {
+                                            const message = `Bonjour, je suis intéressé(e) par l\'offre '${plan.name}'. Mon nom d\'utilisateur est '${user.username}'.`;
+                                            finalCtaLinkRecruiter = `https://wa.me/212783346308?text=${encodeURIComponent(message)}`;
+                                        } else {
+                                            finalCtaLinkRecruiter = '/login';
+                                        }
+                                    }
+                                %>
+                                <a href="<%= finalCtaLinkRecruiter %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
                             </div>
                         <% }) %>
                     </div>

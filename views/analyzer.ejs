@@ -9,22 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="analyzer-page">
-    <header class="main-header">
-        <nav>
-            <a href="/" class="logo">
-                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
-                <span>Ubuntudigit Talent</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="/">Accueil</a></li>
-                <li><a href="/analyzer">Analyseur</a></li>
-                <li><a href="/logout">Déconnexion</a></li>
-            </ul>
-            <button class="nav-toggle"><i class="fas fa-bars"></i></button>
-        </nav>
-    </header>
 
-    <div class="container">
+    <%- include('partials/header') %>
+
+    <main class="container">
         <h1>Analyseur de CV par IA</h1>
         <p class="subtitle">Obtenez un score de compatibilité, des conseils d'amélioration et une version de votre CV optimisée pour le poste.</p>
         
@@ -85,19 +73,15 @@
             </div>
 
         </div>
-    </div>
+    </main>
+
+    <%- include('partials/footer') %>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             checkUserStatus();
-        });
-
-        const navToggle = document.querySelector('.nav-toggle');
-        const navLinks = document.querySelector('.nav-links');
-
-        navToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
         });
 
         async function checkUserStatus() {
@@ -177,7 +161,12 @@
 
             submitButton.disabled = true;
             submitButton.innerText = 'Analyse en cours...';
-            resultsContainer.style.display = 'none';
+            resultsContainer.style.display = 'block'; // Show container to display loading or error
+            analysisResult.innerHTML = '<p>Analyse en cours, veuillez patienter...</p>';
+            document.getElementById('score-value').textContent = "0%";
+            keywordsResult.textContent = "";
+            rewrittenCvResult.textContent = "";
+
 
             try {
                 const response = await fetch(form.action, {
@@ -191,26 +180,25 @@
                     const errorText = data.error || `Une erreur est survenue: ${response.statusText}`;
                     throw new Error(errorText);
                 }
-                
-                animateScore(data.score);
 
-                analysisResult.innerHTML = marked.parse(data.analysis);
-                keywordsResult.textContent = data.keywords;
-                rewrittenCvResult.textContent = data.rewritten_cv;
-                resultsContainer.style.display = 'block';
+                if (!data || typeof data.score === 'undefined' || !data.analysis) {
+                    throw new Error("La réponse du serveur est invalide ou incomplète.");
+                }
+                
+                animateScore(parseInt(data.score, 10) || 0);
+
+                analysisResult.innerHTML = marked.parse(data.analysis || '');
+                keywordsResult.textContent = data.keywords || 'N/A';
+                rewrittenCvResult.textContent = data.rewritten_cv || 'N/A';
 
             } catch (error) {
                 console.error('Erreur lors de l_analyse:', error);
-                analysisResult.innerHTML = `<p style="color: red;">${error.message}</p>`;
-                // Display results container to show the error message
-                resultsContainer.style.display = 'block';
-                // Clear other results fields
-                document.getElementById('score-value').textContent = "0%";
-                keywordsResult.textContent = "";
-                rewrittenCvResult.textContent = "";
+                analysisResult.innerHTML = `<p style="color: red;"><strong>Erreur :</strong> ${error.message}</p><p>Veuillez réessayer ou contacter le support si le problème persiste.</p>`;
+                document.getElementById('score-value').textContent = "Erreur";
+                keywordsResult.textContent = "-";
+                rewrittenCvResult.textContent = "-";
 
             } finally {
-                // Re-check status to update the remaining count and button state
                 checkUserStatus();
             }
         });

@@ -7,18 +7,14 @@
     <!-- SEO Meta Tags -->
     <title>Inscription - Ubuntudigit Talent</title>
     <meta name="description" content="Créez votre compte gratuit sur Ubuntudigit Talent pour commencer à optimiser votre CV avec notre analyseur intelligent et décrocher l'emploi de vos rêves.">
-    <meta name="robots" content="noindex, nofollow"> <!-- Empêcher l'indexation de la page d'inscription -->
+    <meta name="robots" content="noindex, nofollow">
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://ubuntudigit-talent.com/register">
     <meta property="og:title" content="Inscription - Ubuntudigit Talent">
     <meta property="og:description" content="Créez votre compte pour accéder à nos outils d'optimisation de CV.">
     <meta property="og:image" content="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png">
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://ubuntudigit-talent.com/register">
     <meta property="twitter:title" content="Inscription - Ubuntudigit Talent">
     <meta property="twitter:description" content="Créez votre compte pour accéder à nos outils d'optimisation de CV.">
     <meta property="twitter:image" content="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png">
@@ -29,48 +25,50 @@
 </head>
 <body class="auth-page">
 
-    <a href="/" class="auth-home-link"><i class="fas fa-arrow-left"></i></a>
+    
 
-    <div class="auth-box">
-        <div class="auth-header">
-            <a href="/" class="logo">
-                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
-            </a>
-            <h2>Créer votre compte</h2>
-            <p>Rejoignez-nous et optimisez votre carrière dès aujourd'hui.</p>
-        </div>
+    <main>
+        <div class="auth-box">
+            <div class="auth-header">
+                <h2>Créer votre compte</h2>
+                <p>Rejoignez-nous et optimisez votre carrière dès aujourd'hui.</p>
+            </div>
 
-        <form action="/register" method="POST">
-             <div class="form-group">
-                <label for="username">Nom d'utilisateur</label>
-                <input type="text" id="username" name="username" placeholder="Choisissez un nom d'utilisateur" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="exemple@email.com" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Mot de passe</label>
-                <input type="password" id="password" name="password" placeholder="Créez un mot de passe sécurisé" required>
-            </div>
-            <div class="form-group">
-                <label for="role">Vous êtes un...</label>
-                <select id="role" name="role">
-                    <option value="job_seeker" selected>Candidat</option>
-                    <option value="recruiter">Recruteur</option>
-                </select>
-            </div>
-            <button type="submit" class="cta-button">Créer mon compte</button>
-        </form>
+            <form action="/register" method="POST">
+                 <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" placeholder="Choisissez un nom d'utilisateur" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="exemple@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" placeholder="Créez un mot de passe sécurisé" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Vous êtes un...</label>
+                    <select id="role" name="role">
+                        <option value="job_seeker" selected>Candidat</option>
+                        <option value="recruiter">Recruteur</option>
+                    </select>
+                </div>
+                 <% if (error) { %>
+                    <p class="error-message" style="text-align:center; margin-bottom: 1rem;">Une erreur est survenue. Veuillez réessayer.</p>
+                <% } %>
+                <button type="submit" class="cta-button">Créer mon compte</button>
+            </form>
 
-        <div class="auth-footer">
-            <p>Vous avez déjà un compte ? <a href="/login">Connectez-vous</a></p>
-            <div class="privacy-notice">
-                <i class="fas fa-shield-alt"></i>
-                <span>Vos données sont sécurisées et ne sont pas sauvegardées.</span>
+            <div class="auth-footer">
+                <p>Vous avez déjà un compte ? <a href="/login">Connectez-vous</a></p>
             </div>
         </div>
-    </div>
+    </main>
+
+   
+
+    <script src="/script.js"></script>
 
 </body>
 </html>

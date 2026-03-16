@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nos Offres - Ubuntudigit Talent</title>
+    <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="pricing-main-container">
+        <section class="pricing-hero">
+            <h1>Trouvez le plan parfait pour vous</h1>
+            <p>Que vous soyez un talent à la recherche de votre prochain défi ou un recruteur en quête des meilleurs profils, nous avons l'offre qu'il vous faut.</p>
+        </section>
+
+        <div class="container pricing-container">
+
+            <% if (jobSeekerPlans && jobSeekerPlans.length > 0) { %>
+                <div class="plan-category">
+                    <h2>Pour les Candidats</h2>
+                    <div class="plans-grid">
+                        <% jobSeekerPlans.forEach(plan => { %>
+                            <div class="plan-card <%= plan.badge ? 'popular' : '' %>">
+                                <% if (plan.badge) { %>
+                                    <div class="badge"><%= plan.badge %></div>
+                                <% } %>
+                                <h3><%= plan.name %></h3>
+                                <div class="price"><%= plan.price %> <span><%= plan.priceDesc %></span></div>
+                                <p class="analysis-limit">Jusqu'à <%= plan.analysisLimit %> analyses</p>
+                                <ul class="features">
+                                    <% plan.features.forEach(feature => { %>
+                                        <li><i class="fas fa-check-circle"></i> <%= feature %></li>
+                                    <% }) %>
+                                </ul>
+                                <a href="<%= plan.ctaLink %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            <% } %>
+
+            <% if (recruiterPlans && recruiterPlans.length > 0) { %>
+                <div class="plan-category">
+                    <h2>Pour les Recruteurs</h2>
+                    <div class="plans-grid">
+                        <% recruiterPlans.forEach(plan => { %>
+                            <div class="plan-card <%= plan.badge ? 'popular' : '' %>">
+                                <% if (plan.badge) { %>
+                                    <div class="badge"><%= plan.badge %></div>
+                                <% } %>
+                                <h3><%= plan.name %></h3>
+                                <div class="price"><%= plan.price %> <span><%= plan.priceDesc %></span></div>
+                                <p class="analysis-limit">Jusqu'à <%= plan.analysisLimit %> analyses</p>
+                                <ul class="features">
+                                    <% plan.features.forEach(feature => { %>
+                                        <li><i class="fas fa-check-circle"></i> <%= feature %></li>
+                                    <% }) %>
+                                </ul>
+                                <a href="<%= plan.ctaLink %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            <% } %>
+
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/script.js"></script>
+</body>
+</html>

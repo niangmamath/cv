@@ -10,133 +10,115 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const User = require('./models/user');
+const Plan = require('./models/plan');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Set EJS as templating engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-
-// --- Database and Admin User Setup ---
 mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('MongoDB connected');
-    const adminUsername = 'admin';
-
-    // Force-reset the admin user to fix the password issue.
-    await User.deleteOne({ username: adminUsername });
-    console.log('Attempting to reset admin user...');
-
-    // Re-create the admin user with the plain password.
-    // The 'pre-save' hook in the User model will hash it automatically.
-    await User.create({
-      username: adminUsername,
-      email: 'admin@ubuntudigit-talent.com',
-      password: 'admin2140', // Plain password
-      role: 'admin'
-    });
-    console.log('Admin user has been reset. The password is now "admin2140".');
+    await seedAdminUser();
+    await seedPlans();
   })
   .catch(err => console.error("Erreur de connexion à MongoDB:", err));
 
-// --- Initializations ---
+async function seedAdminUser() {
+    const adminUsername = 'admin';
+    const adminExists = await User.findOne({ username: adminUsername });
+    if (!adminExists) {
+        await User.create({ username: adminUsername, email: 'admin@ubuntudigit-talent.com', password: 'admin2140', role: 'admin' });
+        console.log('Admin user created.');
+    }
+}
+
+async function seedPlans() {
+    const plans = [
+        { name: 'Essentiel', role: 'job_seeker', price: 'Gratuit', priceDesc: 'pour commencer', analysisLimit: 5, features: ['5 analyses de CV', 'Analyse de compatibilité', 'Suggestions de mots-clés', 'Support par email'], ctaText: 'Commencer gratuitement', ctaLink: '/register', displayOrder: 1 },
+        { name: 'Premium', role: 'job_seeker', price: '9.99€', priceDesc: '/ mois', analysisLimit: 50, features: ['50 analyses de CV', 'Réécriture de CV par IA', 'Tons personnalisables (Pro, Créatif...)', 'Support prioritaire'], badge: 'Populaire', ctaText: 'Passer au Premium', ctaLink: '#', isCtaOutline: false, displayOrder: 2 },
+        { name: 'Basique', role: 'recruiter', price: 'Gratuit', priceDesc: 'pour les besoins simples', analysisLimit: 10, features: ['10 analyses de CV', 'Analyse multi-CV', 'Classement des candidats', 'Support par email'], ctaText: 'Créer un compte', ctaLink: '/register', displayOrder: 1 },
+        { name: 'Pro', role: 'recruiter', price: '49.99€', priceDesc: '/ mois', analysisLimit: 200, features: ['200 analyses de CV', 'Téléchargement des rapports PDF', 'Pas de publicité', 'Support téléphonique et email'], badge: 'Meilleure Valeur', ctaText: 'Choisir Pro', ctaLink: '#', displayOrder: 2 },
+        { name: 'Entreprise', role: 'recruiter', price: 'Sur devis', priceDesc: '', analysisLimit: 1000, features: ['Analyses illimitées', 'Intégration ATS', 'Support dédié', 'Tableau de bord personnalisé'], ctaText: 'Nous contacter', ctaLink: 'https://wa.me/212783346308', isCtaOutline: true, displayOrder: 3 },
+    ];
+    if (await Plan.countDocuments() === 0) {
+        console.log('Seeding plans...');
+        await Plan.insertMany(plans);
+        console.log('Plans seeded.');
+    }
+}
+
 const upload = multer({ dest: 'uploads/' });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// --- Middleware ---
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'une_cle_secrete_par_defaut',
+  secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: false,
   cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
-// --- Helper Functions ---
+app.use(async (req, res, next) => {
+    res.locals.user = req.session.userId ? await User.findById(req.session.userId) : null;
+    next();
+});
 
-/**
- * Extracts text from an uploaded file (PDF or TXT).
- * Deletes the file after reading.
- * @param {Object} file - The file object from multer.
- * @returns {Promise<String|null>} The extracted text or null.
- */
 const getTextFromFile = async (file) => {
     if (!file) return null;
     const { path: filePath, originalname } = file;
     const extension = path.extname(originalname).toLowerCase();
     let text = '';
-
     try {
         if (extension === '.pdf') {
-            const dataBuffer = fs.readFileSync(filePath);
-            const data = await pdf(dataBuffer);
-            text = data.text;
+            text = (await pdf(fs.readFileSync(filePath))).text;
         } else if (extension === '.txt') {
             text = fs.readFileSync(filePath, 'utf-8');
-        } else {
-            console.warn(`Unsupported file type: ${extension} for file ${originalname}`);
-            // Return empty string for unsupported types, but still clean up.
         }
     } catch (readError) {
         console.error(`Error reading file ${originalname}:`, readError);
-        throw new Error(`Failed to read content from ${originalname}.`);
     } finally {
-        // Always clean up the uploaded file
         if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+             fs.unlinkSync(filePath);
         }
     }
     return text;
 };
 
-
-// --- Authorization Middleware ---
-const authorizeUser = (req, res, next) => {
-    if (!req.session.userId) {
-        return res.redirect('/login');
-    }
-    next();
-};
-
-const authorizeApi = (req, res, next) => {
-    if (!req.session.userId) {
-        return res.status(401).json({ error: 'Authentication required. Please log in.' });
-    }
-    next();
-};
-
-const authorizeJobSeeker = (req, res, next) => {
-    if (req.session.role !== 'job_seeker') {
-        return res.status(403).render('403');
-    }
-    next();
-};
-
-const authorizeRecruiter = (req, res, next) => {
-    if (req.session.role !== 'recruiter') {
-        return res.status(403).render('403');
-    }
-    next();
-};
-
-const authorizeAdminDashboard = (req, res, next) => {
-    if (req.session.adminId && req.session.role === 'admin') {
-        return next();
-    }
-    res.redirect('/admin/login');
-};
-
-
-// --- Routes --- //
+const authorizeUser = (req, res, next) => req.session.userId ? next() : res.redirect('/login');
+const authorizeApi = (req, res, next) => req.session.userId ? next() : res.status(401).json({ error: 'Authentication required.' });
+const authorizeJobSeeker = (req, res, next) => (res.locals.user && res.locals.user.role === 'job_seeker') ? next() : res.status(403).render('403');
+const authorizeRecruiter = (req, res, next) => (res.locals.user && res.locals.user.role === 'recruiter') ? next() : res.status(403).render('403');
+const authorizeAdminDashboard = (req, res, next) => (req.session.adminId && req.session.role === 'admin') ? next() : res.redirect('/admin/login');
 
 app.get('/', (req, res) => res.render('index'));
-app.get('/login', (req, res) => res.render('login', {error: req.query.error}));
-app.get('/register', (req, res) => res.render('register', {error: req.query.error}));
-app.get('/admin/login', (req, res) => res.render('admin-login', {error: req.query.error}));
+app.get('/login', (req, res) => res.render('login', { error: req.query.error }));
+app.get('/register', (req, res) => res.render('register', { error: req.query.error }));
+app.get('/admin/login', (req, res) => res.render('admin-login', { error: req.query.error }));
+
+app.get('/pricing', async (req, res) => {
+    try {
+        let jobSeekerPlans = [], recruiterPlans = [];
+        if (res.locals.user) {
+            if (res.locals.user.role === 'job_seeker') {
+                jobSeekerPlans = await Plan.find({ role: 'job_seeker' }).sort({ displayOrder: 1 });
+            } else if (res.locals.user.role === 'recruiter') {
+                recruiterPlans = await Plan.find({ role: 'recruiter' }).sort({ displayOrder: 1 });
+            }
+        } else {
+            jobSeekerPlans = await Plan.find({ role: 'job_seeker' }).sort({ displayOrder: 1 });
+            recruiterPlans = await Plan.find({ role: 'recruiter' }).sort({ displayOrder: 1 });
+        }
+        res.render('pricing', { jobSeekerPlans, recruiterPlans });
+    } catch (error) {
+        console.error('Error fetching plans:', error);
+        res.status(500).send('Error loading pricing page.');
+    }
+});
 
 app.post('/register', async (req, res) => {
   try {
@@ -153,15 +135,7 @@ app.post('/login', async (req, res, next) => {
     const user = await User.findOne({ email });
     if (user && user.role !== 'admin' && await user.comparePassword(password)) {
       req.session.userId = user._id;
-      req.session.role = user.role;
-      req.session.save((err) => {
-        if (err) return next(err);
-        if (user.role === 'recruiter') {
-          res.redirect('/recruiter');
-        } else {
-          res.redirect('/analyzer');
-        }
-      });
+      res.redirect(user.role === 'recruiter' ? '/recruiter' : '/analyzer');
     } else {
       res.redirect('/login?error=1');
     }
@@ -174,14 +148,10 @@ app.post('/admin/login', async (req, res, next) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
-
     if (user && user.role === 'admin' && await user.comparePassword(password)) {
         req.session.adminId = user._id;
-        req.session.role = user.role;
-        req.session.save((err) => {
-            if (err) return next(err);
-            res.redirect('/admin');
-        });
+        req.session.role = 'admin';
+        res.redirect('/admin');
     } else {
       res.redirect('/admin/login?error=1');
     }
@@ -191,13 +161,9 @@ app.post('/admin/login', async (req, res, next) => {
 });
 
 app.get('/logout', (req, res, next) => {
-  req.session.destroy((err) => {
-    if (err) return next(err);
-    res.redirect('/');
-  });
+  req.session.destroy((err) => err ? next(err) : res.redirect('/'));
 });
 
-// --- Protected Routes ---
 app.get('/analyzer', authorizeUser, authorizeJobSeeker, (req, res) => res.render('analyzer'));
 app.get('/recruiter', authorizeUser, authorizeRecruiter, (req, res) => res.render('recruiter'));
 app.get('/admin', authorizeAdminDashboard, async (req, res) => {
@@ -211,337 +177,207 @@ app.get('/admin', authorizeAdminDashboard, async (req, res) => {
 
 app.post('/admin/update-quota', authorizeAdminDashboard, async (req, res) => {
     try {
-        const { userId, newQuota } = req.body;
-        if (!userId || !newQuota) {
-            return res.status(400).send('User ID and new quota are required.');
-        }
-        await User.findByIdAndUpdate(userId, { maxAnalyses: parseInt(newQuota, 10) });
+        await User.findByIdAndUpdate(req.body.userId, { maxAnalyses: parseInt(req.body.newQuota, 10) });
         res.redirect('/admin');
     } catch (error) {
-        console.error("Error updating quota:", error);
         res.status(500).send("Error updating quota");
     }
 });
 
-const analyzeUploads = upload.fields([
-    { name: 'cv', maxCount: 1 },
-    { name: 'jobDescriptionFile', maxCount: 1 }
-]);
+const analyzeUploads = upload.fields([ { name: 'cv', maxCount: 1 }, { name: 'jobDescriptionFile', maxCount: 1 } ]);
 
-// --- START OF MODIFIED JOBSEEKER ROUTE ---
 app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (req, res) => {
-    let jobDescription;
-    const cvFile = req.files.cv ? req.files.cv[0] : null;
-    const jobDescriptionFile = req.files.jobDescriptionFile ? req.files.jobDescriptionFile[0] : null;
-    const selectedTone = req.body.tone || 'Professionnel'; // Default to Professionnel
-
+    const { cv: cvFile, jobDescriptionFile } = req.files || {};
     try {
-        const user = await User.findById(req.session.userId);
+        const user = res.locals.user;
         if (user.analysisCount >= user.maxAnalyses) {
-            return res.status(403).json({ 
-                error: "Vous avez atteint votre quota d'analyses. Pour continuer à utiliser notre service, veuillez nous contacter sur WhatsApp pour mettre à niveau votre compte."
-            });
+            return res.status(403).json({ error: "Quota d'analyse atteint." });
         }
 
-        User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: 1 } }).exec();
+        await User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: 1 } });
 
-        if (!cvFile) {
-            if (jobDescriptionFile) await getTextFromFile(jobDescriptionFile); // Cleanup
-            return res.status(400).json({ error: "Un fichier de CV est requis." });
+        const cvText = await getTextFromFile(cvFile ? cvFile[0] : null);
+        const jobDescription = req.body.jobDescription || await getTextFromFile(jobDescriptionFile ? jobDescriptionFile[0] : null);
+
+        if (!cvText || !jobDescription) {
+            return res.status(400).json({ error: "CV et description de l'offre requis." });
         }
 
-        if (jobDescriptionFile) {
-            jobDescription = await getTextFromFile(jobDescriptionFile);
-        } else {
-            jobDescription = req.body.jobDescription;
-        }
-
-        if (!jobDescription) {
-            if (cvFile) await getTextFromFile(cvFile); // Cleanup
-            return res.status(400).json({ error: "Une description de l'offre d'emploi est requise (texte ou fichier)." });
-        }
-
-        const cvText = await getTextFromFile(cvFile);
-        if (!cvText) {
-             return res.status(400).json({ error: "Impossible de lire le contenu du CV." });
-        }
-
-        // --- MODIFICATION: Added tone to the prompt ---
-        const prompt = `
-            Analysez le CV fourni par rapport à la description de poste. Votre réponse doit être uniquement un objet JSON valide, sans texte ou explication supplémentaire.
-            L'objet JSON doit avoir la structure suivante :
-            {
-              "score": <Un pourcentage (0-100) représentant la compatibilité du CV avec la description du poste>,
-              "analysis": "<Une analyse détaillée du CV. Fournissez des suggestions concrètes d'amélioration, des reformulations et des conseils pour mieux correspondre à l'offre. Utilisez le markdown pour la mise en forme.>",
-              "keywords": "<Une liste de mots-clés et de phrases importants manquants dans le CV qui sont cruciaux pour passer les systèmes de suivi des candidats (ATS).>",
-              "rewritten_cv": "<Réécrivez complètement le CV pour l'aligner parfaitement avec la description de poste. Utilisez un ton ${selectedTone}. Votre tâche est de reformuler les descriptions de poste, les compétences et les résumés en utilisant un langage percutant et en intégrant stratégiquement les mots-clés de la description de poste. Basez-vous uniquement sur les informations du CV original et n'inventez aucune information. L'objectif est de produire un CV optimisé pour les ATS, prêt à l'emploi. Le résultat doit être le texte complet et professionnel du CV révisé.>"
-            }
-
-            **Description de poste :**
-            ${jobDescription}
-
-            **CV :**
-            ${cvText}
-        `;
+        const prompt = `Analysez le CV fourni par rapport à la description de poste. Votre réponse doit être uniquement un objet JSON valide avec les clés : "score" (nombre de 0 à 100), "analysis" (markdown string), "keywords" (string), et "rewritten_cv" (string). CV: ${cvText} Description: ${jobDescription}`;
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [{ "role": "user", "content": prompt }],
             response_format: { type: "json_object" },
-            temperature: 0.2, // Slightly increase temperature for nuanced tones
+            temperature: 0.2,
         });
 
-        const rawResponse = completion.choices[0].message.content;
-        const structuredResponse = JSON.parse(rawResponse);
+        let analysisData;
+        try {
+            analysisData = JSON.parse(completion.choices[0].message.content);
+        } catch (parseError) {
+            console.error("Failed to parse JSON from OpenAI:", completion.choices[0].message.content);
+            throw new Error("L'analyse a échoué car la réponse de l'IA était mal formatée.");
+        }
 
-        res.json(structuredResponse);
+        if (!analysisData || typeof analysisData.score === 'undefined' || !analysisData.analysis) {
+            console.error("Invalid or incomplete data from OpenAI:", analysisData);
+            throw new Error("L'analyse a retourné des données incomplètes.");
+        }
+        
+        res.json(analysisData);
 
     } catch (error) {
-        console.error("Error in /analyze:", error);
-        res.status(500).json({ error: error.message || "Une erreur est survenue lors de l'analyse du CV." });
+        console.error("Error in /analyze route:", error);
+        res.status(500).json({ error: error.message });
     }
 });
-// --- END OF MODIFIED JOBSEEKER ROUTE ---
 
+const recruiterUploads = upload.fields([ { name: 'cvs' }, { name: 'jobDescriptionFile', maxCount: 1 } ]);
 
-const recruiterUploads = upload.fields([
-    { name: 'cvs' },
-    { name: 'jobDescriptionFile', maxCount: 1 }
-]);
-
-// --- Recruiter route remains unchanged ---
 app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads, async (req, res) => {
-    let jobDescription;
-    const cvFiles = req.files.cvs || [];
-    const jobDescriptionFile = req.files.jobDescriptionFile ? req.files.jobDescriptionFile[0] : null;
-
-    const allUploadedFiles = [...cvFiles];
-    if (jobDescriptionFile) allUploadedFiles.push(jobDescriptionFile);
-
+    const { cvs, jobDescriptionFile } = req.files || {};
+    
     try {
-        const user = await User.findById(req.session.userId);
-        if (user.analysisCount >= user.maxAnalyses) {
-            return res.status(403).json({ 
-                error: "Vous avez atteint votre quota d'analyses. Pour continuer à utiliser notre service, veuillez nous contacter sur WhatsApp pour mettre à niveau votre compte."
-            });
+        const user = res.locals.user;
+        const remainingAnalyses = user.maxAnalyses - user.analysisCount;
+
+        if (!cvs || cvs.length === 0) {
+            return res.status(400).json({ error: "Veuillez téléverser au moins un CV." });
         }
 
-        User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: 1 } }).exec();
-
-        if (jobDescriptionFile) {
-            jobDescription = await getTextFromFile(jobDescriptionFile);
-        } else {
-            jobDescription = req.body.jobDescription;
+        if (cvs.length > remainingAnalyses) {
+            return res.status(403).json({ error: `Quota insuffisant. Vous avez ${remainingAnalyses} analyses restantes, mais vous essayez d'en utiliser ${cvs.length}.` });
         }
 
+        const jobDescription = req.body.jobDescription || await getTextFromFile(jobDescriptionFile ? jobDescriptionFile[0] : null);
         if (!jobDescription) {
-            return res.status(400).json({ error: "La description de l'offre est requise (texte ou fichier)." });
-        }
-        if (cvFiles.length === 0) {
-            return res.status(400).json({ error: "Au moins un CV est requis." });
+            return res.status(400).json({ error: "La description de l'offre d'emploi est requise." });
         }
 
-        const results = [];
-        for (const file of cvFiles) {
+        const analysisPromises = cvs.map(async (cvFile) => {
+            const cvText = await getTextFromFile(cvFile);
+            if (!cvText) {
+                return { filename: cvFile.originalname, error: "Impossible de lire le fichier." };
+            }
+
             try {
-                const cvText = await getTextFromFile(file); 
-                if (!cvText) {
-                    results.push({ filename: file.originalname, score: 0, error: "Impossible de lire le fichier.", strengths: "", weaknesses: "" });
-                    continue;
-                }
-
-                const prompt = `
-                    Analysez le CV suivant par rapport à la description de poste.
-                    Votre réponse DOIT être un objet JSON valide sans texte ou explication supplémentaire, avec la structure suivante :
-                    {
-                      "score": <Un pourcentage (0-100) de compatibilité>,
-                      "strengths": "<Un résumé concis des 2-3 points forts principaux du CV par rapport au poste>",
-                      "weaknesses": "<Un résumé concis des 2-3 points faibles ou des manques principaux du CV par rapport au poste>"
-                    }
-
-                    **Description de poste :**
-                    ${jobDescription}
-
-                    **CV :**
-                    ${cvText}
-                `;
-
+                const prompt = `Évalue ce CV en fonction de la description de poste. Fournis un objet JSON avec les clés "score" (nombre), "strengths" (chaîne), et "weaknesses" (chaîne). CV: ${cvText} Description: ${jobDescription}`;
                 const completion = await openai.chat.completions.create({
                     model: "gpt-4o",
                     messages: [{ "role": "user", "content": prompt }],
                     response_format: { type: "json_object" },
-                    temperature: 0,
+                    temperature: 0.1,
                 });
 
-                const rawResponse = completion.choices[0].message.content;
-                const structuredResponse = JSON.parse(rawResponse);
+                const result = JSON.parse(completion.choices[0].message.content);
+                return { filename: cvFile.originalname, ...result };
 
-                results.push({
-                    filename: file.originalname,
-                    score: structuredResponse.score,
-                    strengths: structuredResponse.strengths,
-                    weaknesses: structuredResponse.weaknesses,
-                });
-
-            } catch (singleFileError) {
-                console.error(`Failed to process ${file.originalname}:`, singleFileError);
-                results.push({ filename: file.originalname, score: 0, error: singleFileError.message, strengths: "", weaknesses: "" });
+            } catch (e) {
+                return { filename: cvFile.originalname, error: `L'analyse a échoué: ${e.message}` };
             }
-        }
+        });
 
-        results.sort((a, b) => b.score - a.score);
+        const results = await Promise.all(analysisPromises);
+
+        const successfulAnalyses = results.filter(r => !r.error);
+        await User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: successfulAnalyses.length } });
+
+        results.sort((a, b) => (b.score || 0) - (a.score || 0));
         const rankedResults = results.map((result, index) => ({ ...result, rank: index + 1 }));
 
         res.json(rankedResults);
 
     } catch (error) {
-        console.error("Error in /analyze-resumes:", error);
-        for (const file of allUploadedFiles) {
-            if (fs.existsSync(file.path)) {
-                fs.unlinkSync(file.path);
-            }
-        }
-        res.status(500).json({ error: error.message || "Une erreur est survenue lors de l'analyse des CVs." });
+        console.error("Error in /analyze-resumes route:", error);
+        res.status(500).json({ error: error.message });
     }
 });
 
+
 app.post('/download-recruiter-results-pdf', authorizeUser, authorizeRecruiter, (req, res) => {
-    const { results, jobDescription } = req.body;
+     try {
+        const { results, jobDescription } = req.body;
 
-    if (!results || !Array.isArray(results)) {
-        return res.status(400).send('Données de résultats invalides.');
-    }
+        if (!results || !Array.isArray(results) || results.length === 0) {
+            return res.status(400).send('Données de résultats invalides ou manquantes.');
+        }
 
-    try {
-        const doc = new PDFDocument({
-            size: 'A4',
-            margins: { top: 50, bottom: 50, left: 72, right: 72 }
-        });
+        const doc = new PDFDocument({ margins: { top: 50, bottom: 50, left: 72, right: 72 } });
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=resultats-analyse-cv.pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=resultats-analyse.pdf');
 
         doc.pipe(res);
 
-        doc.font('Helvetica-Bold').fontSize(20).text('Rapport d\'analyse des CVs', { align: 'center' });
-        doc.moveDown(2);
+        doc.fontSize(20).font('Helvetica-Bold').text('Rapport d\'Analyse de CVs', { align: 'center' }).moveDown();
 
-        doc.font('Helvetica-Bold').fontSize(14).text('Poste Visé');
-        doc.font('Helvetica').fontSize(10).text(jobDescription || 'Non spécifiée');
-        doc.moveDown(2);
+        doc.fontSize(14).font('Helvetica-Bold').text('Description du Poste').moveDown(0.5);
+        doc.font('Helvetica').fontSize(10).text(jobDescription || 'Non fournie').moveDown();
 
-        doc.font('Helvetica-Bold').fontSize(14).text('Classement des Candidats');
-        doc.moveDown();
+        results.forEach(result => {
+            doc.addPage();
+            doc.fontSize(16).font('Helvetica-Bold').text(`Candidat: ${result.filename}`);
+            doc.fontSize(12).font('Helvetica-Bold').text(`Rang: #${result.rank} | Score de compatibilité: ${result.score}%`).moveDown();
 
-        results.forEach((result) => {
-            doc.font('Helvetica-Bold').fontSize(12)
-               .text(`Rang: #${result.rank} | Score: ${result.score}% | Fichier: ${result.filename}`);
-            doc.moveDown(0.5);
+            doc.fontSize(12).font('Helvetica-Bold').fillColor('green').text('Points Forts').moveDown(0.5);
+            doc.font('Helvetica').fontSize(10).fillColor('black').text(result.strengths || 'Aucun détecté.').moveDown();
 
-            doc.font('Helvetica-Bold').fontSize(10).text('Points Forts:');
-            doc.font('Helvetica').fontSize(10)
-               .list([result.strengths || 'Non spécifié'], {
-                bulletRadius: 2,
-                indent: 15,
-                textIndent: 8,
-                lineGap: 4
-            });
-            doc.moveDown(0.5);
-
-            doc.font('Helvetica-Bold').fontSize(10).text('Points Faibles:');
-            doc.font('Helvetica').fontSize(10)
-               .list([result.weaknesses || 'Non spécifié'], {
-                bulletRadius: 2,
-                indent: 15,
-                textIndent: 8,
-                lineGap: 4
-            });
+            doc.fontSize(12).font('Helvetica-Bold').fillColor('red').text('Points Faibles').moveDown(0.5);
+            doc.font('Helvetica').fontSize(10).fillColor('black').text(result.weaknesses || 'Aucun détecté.').moveDown();
             
-            doc.moveDown(1);
-            doc.strokeColor("#aaaaaa").lineWidth(0.5).moveTo(72, doc.y).lineTo(523, doc.y).stroke();
-            doc.moveDown(1);
+            if(result.error){
+                 doc.fontSize(12).font('Helvetica-Bold').fillColor('orange').text('Erreur').moveDown(0.5);
+                 doc.font('Helvetica').fontSize(10).fillColor('black').text(result.error).moveDown();
+            }
         });
 
         doc.end();
 
     } catch (error) {
         console.error('Erreur lors de la génération du PDF pour le recruteur:', error);
-        if (!res.headersSent) {
-            res.status(500).send('Erreur lors de la génération du PDF.');
-        }
+        res.status(500).send('Erreur lors de la génération du fichier PDF.');
     }
 });
-
-
-app.get('/dev/clear-users', async (req, res) => {
-    try {
-        await User.deleteMany({});
-        res.send('Users collection cleared');
-    } catch (error) {
-        res.status(500).send('Error clearing users collection');
-    }
-});
-
 
 app.post('/download-pdf', (req, res) => {
-    const cvContent = req.body.cv_text;
-
     try {
+        const { cv_text } = req.body;
+
+        if (!cv_text) {
+            return res.status(400).send('Aucun texte de CV fourni.');
+        }
+
         const doc = new PDFDocument({
-            size: 'A4',
-            margins: { top: 50, bottom: 50, left: 72, right: 72 }
+            margins: { top: 72, bottom: 72, left: 72, right: 72 }
         });
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=cv-optimise.pdf');
 
         doc.pipe(res);
-
-        doc.font('Helvetica').fontSize(10).text(cvContent, {
-            align: 'left',
-            lineBreak: true
-        });
-
+        doc.font('Helvetica').fontSize(12).text(cv_text, { align: 'justify' });
         doc.end();
 
     } catch (error) {
-        console.error('Erreur lors de la génération du PDF avec PDFKit:', error);
-        if (!res.headersSent) {
-            res.status(500).send('Erreur lors de la génération du PDF.');
-        }
+        console.error('Erreur lors de la génération du PDF:', error);
+        res.status(500).send('Erreur lors de la génération du fichier PDF.');
     }
 });
 
-// API endpoint to get user role
 app.get('/api/user-status', authorizeApi, async (req, res) => {
     try {
         const user = await User.findById(req.session.userId).select('analysisCount maxAnalyses');
-        if (!user) {
-            return res.status(404).json({ error: 'User not found.' });
-        }
-        res.json({
-            analysisCount: user.analysisCount,
-            maxAnalyses: user.maxAnalyses
-        });
+        res.json({ analysisCount: user.analysisCount, maxAnalyses: user.maxAnalyses });
     } catch (error) {
         res.status(500).json({ error: 'Error fetching user status.' });
     }
 });
 
-
 app.get('/api/user-role', authorizeApi, (req, res) => {
-    if (req.session.role) {
-        res.json({ role: req.session.role });
-    } else {
-        res.status(401).json({ error: 'Not authenticated' });
-    }
+    res.json({ role: res.locals.user ? res.locals.user.role : null });
 });
 
-// --- Error Handling ---
-app.use((req, res, next) => {
-    res.status(404).render('404');
-});
+app.use((req, res, next) => res.status(404).render('404'));
 
-app.listen(port, () => {
-    console.log(`Le serveur est en écoute sur http://localhost:${port}`);
-});
+app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));

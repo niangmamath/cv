@@ -9,22 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="recruiter-page">
-    <header class="main-header">
-        <nav>
-            <a href="/" class="logo">
-                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
-                <span>Ubuntudigit Talent</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="/">Accueil</a></li>
-                <li><a href="/recruiter">Espace Recruteur</a></li>
-                <li><a href="/logout">Déconnexion</a></li>
-            </ul>
-            <button class="nav-toggle"><i class="fas fa-bars"></i></button>
-        </nav>
-    </header>
 
-    <div class="container">
+    <%- include('partials/header') %>
+
+    <main class="container">
         <section class="analysis-form-section">
             <h2>Lancer une nouvelle analyse</h2>
             <p class="subtitle">Importez les CVs de vos candidats et l'offre d'emploi pour obtenir un classement basé sur la compatibilité.</p>
@@ -60,22 +48,14 @@
                 <!-- Les résultats seront injectés ici -->
             </div>
         </section>
-    </div>
+    </main>
 
-    <footer>
-        <p>&copy; 2024 Ubuntudigit Talent. Tous droits réservés.</p>
-    </footer>
+    <%- include('partials/footer') %>
 
+    <script src="/script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             checkUserStatus();
-        });
-
-        const navToggle = document.querySelector('.nav-toggle');
-        const navLinks = document.querySelector('.nav-links');
-
-        navToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
         });
 
         async function checkUserStatus() {
@@ -182,7 +162,7 @@
                                         <h5><i class="fas fa-times-circle"></i> Points Faibles</h5>
                                         <p>${result.weaknesses || 'Aucun point faible notable détecté.'}</p>
                                     </div>
-                                     ${result.error ? `<p class="error-message">Erreur: ${result.error}</p>` : ''}
+                                     ${result.error ? `<p class=\"error-message\">Erreur: ${result.error}</p>` : ''}
                                 </div>
                             </div>
                         `;
@@ -200,7 +180,6 @@
             }
         });
 
-        // Event listener for the toggle buttons (using event delegation)
         resultsContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('toggle-details-btn')) {
                 const details = e.target.nextElementSibling;

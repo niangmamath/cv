@@ -31,19 +31,7 @@
 </head>
 <body class="home-page">
 
-    <header class="main-header">
-        <nav>
-            <a href="/" class="logo">
-                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
-                <span>Ubuntudigit Talent</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="/login">Connexion</a></li>
-                <li><a href="/register" class="cta-button-secondary">S'inscrire</a></li>
-            </ul>
-            <button class="nav-toggle"><i class="fas fa-bars"></i></button>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <section class="hero-section">
         <div class="hero-content">
@@ -51,7 +39,7 @@
             <p>Gagnez un temps précieux : notre IA analyse et optimise votre CV pour les systèmes de suivi des candidats (ATS), augmentant ainsi vos chances d'obtenir un entretien.</p>
             <div class="hero-buttons">
                 <a href="/register" class="cta-button">Commencer gratuitement</a>
-                <a href="/recruiter" class="cta-button-outline">Je suis recruteur</a>
+                <a href="/pricing" class="cta-button-outline">Voir les tarifs</a>
             </div>
         </div>
     </section>
@@ -81,22 +69,13 @@
         <div class="container">
             <h2>Pour les Recruteurs</h2>
             <p>Gagnez du temps et identifiez les meilleurs talents plus rapidement. Notre plateforme vous permet d'analyser plusieurs CVs simultanément par rapport à une offre d'emploi et de classer les candidats les plus pertinents.</p>
-            <a href="/recruiter" class="cta-button">Découvrez l'espace recruteur</a>
+            <a href="/pricing" class="cta-button">Découvrez nos offres</a>
         </div>
     </section>
 
-    <footer>
-        <p>&copy; 2024 Ubuntudigit Talent. Tous droits réservés.</p>
-    </footer>
+    <%- include('partials/footer') %>
 
-    <script>
-        const navToggle = document.querySelector('.nav-toggle');
-        const navLinks = document.querySelector('.nav-links');
-
-        navToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-    </script>
+    <script src="/script.js"></script>
 
 </body>
 </html>

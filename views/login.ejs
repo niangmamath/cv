@@ -7,18 +7,14 @@
     <!-- SEO Meta Tags -->
     <title>Connexion - Ubuntudigit Talent</title>
     <meta name="description" content="Connectez-vous à votre compte Ubuntudigit Talent pour accéder à notre analyseur de CV par IA et optimiser votre recherche d'emploi.">
-    <meta name="robots" content="noindex, nofollow"> <!-- Empêcher l'indexation de la page de connexion -->
+    <meta name="robots" content="noindex, nofollow">
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://ubuntudigit-talent.com/login">
     <meta property="og:title" content="Connexion - Ubuntudigit Talent">
     <meta property="og:description" content="Accédez à votre compte pour utiliser nos outils d'optimisation de CV.">
     <meta property="og:image" content="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png">
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://ubuntudigit-talent.com/login">
     <meta property="twitter:title" content="Connexion - Ubuntudigit Talent">
     <meta property="twitter:description" content="Accédez à votre compte pour utiliser nos outils d'optimisation de CV.">
     <meta property="twitter:image" content="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png">
@@ -29,37 +25,39 @@
 </head>
 <body class="auth-page">
 
-    <a href="/" class="auth-home-link"><i class="fas fa-arrow-left"></i></a>
+    
 
-    <div class="auth-box">
-        <div class="auth-header">
-            <a href="/" class="logo">
-                <img src="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" alt="Ubuntudigit Talent Logo">
-            </a>
-            <h2>Heureux de vous revoir !</h2>
-            <p>Connectez-vous pour accéder à votre espace.</p>
-        </div>
-
-        <form action="/login" method="POST">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="exemple@email.com" required>
+    <main>
+        <div class="auth-box">
+            <div class="auth-header">
+                <h2>Heureux de vous revoir !</h2>
+                <p>Connectez-vous pour accéder à votre espace.</p>
             </div>
-            <div class="form-group">
-                <label for="password">Mot de passe</label>
-                <input type="password" id="password" name="password" placeholder="Votre mot de passe" required>
-            </div>
-            <button type="submit" class="cta-button">Se connecter</button>
-        </form>
 
-        <div class="auth-footer">
-            <p>Vous n'avez pas de compte ? <a href="/register">Inscrivez-vous</a></p>
-             <div class="privacy-notice">
-                <i class="fas fa-shield-alt"></i>
-                <span>Vos données sont sécurisées et ne sont pas sauvegardées.</span>
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="exemple@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" placeholder="Votre mot de passe" required>
+                </div>
+                <% if (error) { %>
+                    <p class="error-message" style="text-align:center; margin-bottom: 1rem;">Email ou mot de passe incorrect.</p>
+                <% } %>
+                <button type="submit" class="cta-button">Se connecter</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Vous n'avez pas de compte ? <a href="/register">Inscrivez-vous</a></p>
             </div>
         </div>
-    </div>
+    </main>
+
+    
+
+    <script src="/script.js"></script>
 
 </body>
 </html>

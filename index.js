@@ -22,33 +22,72 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('MongoDB connected');
     await seedAdminUser();
-    await seedPlans();
+    await syncPlans(); 
+    await syncUserLimits(); // Add this final sync step
   })
   .catch(err => console.error("Erreur de connexion à MongoDB:", err));
 
 async function seedAdminUser() {
-    const adminUsername = 'admin';
-    const adminExists = await User.findOne({ username: adminUsername });
-    if (!adminExists) {
-        await User.create({ username: adminUsername, email: 'admin@ubuntudigit-talent.com', password: 'admin2140', role: 'admin' });
-        console.log('Admin user created.');
+    try {
+        const adminExists = await User.findOne({ username: 'admin' });
+        if (!adminExists) {
+            await User.create({ username: 'admin', email: 'admin@ubuntudigit-talent.com', password: 'admin2140', role: 'admin' });
+            console.log('Admin user created.');
+        }
+    } catch (error) {
+        console.error('Error seeding admin user:', error);
     }
 }
 
-async function seedPlans() {
-    const plans = [
-        { name: 'Essentiel', role: 'job_seeker', price: 'Gratuit', priceDesc: 'pour commencer', analysisLimit: 5, features: ['5 analyses de CV', 'Analyse de compatibilité', 'Suggestions de mots-clés', 'Support par email'], ctaText: 'Commencer gratuitement', ctaLink: '/register', displayOrder: 1 },
-        { name: 'Premium', role: 'job_seeker', price: '9.99€', priceDesc: '/ mois', analysisLimit: 50, features: ['50 analyses de CV', 'Réécriture de CV par IA', 'Tons personnalisables (Pro, Créatif...)', 'Support prioritaire'], badge: 'Populaire', ctaText: 'Passer au Premium', ctaLink: '#', isCtaOutline: false, displayOrder: 2 },
-        { name: 'Basique', role: 'recruiter', price: 'Gratuit', priceDesc: 'pour les besoins simples', analysisLimit: 10, features: ['10 analyses de CV', 'Analyse multi-CV', 'Classement des candidats', 'Support par email'], ctaText: 'Créer un compte', ctaLink: '/register', displayOrder: 1 },
-        { name: 'Pro', role: 'recruiter', price: '49.99€', priceDesc: '/ mois', analysisLimit: 200, features: ['200 analyses de CV', 'Téléchargement des rapports PDF', 'Pas de publicité', 'Support téléphonique et email'], badge: 'Meilleure Valeur', ctaText: 'Choisir Pro', ctaLink: '#', displayOrder: 2 },
-        { name: 'Entreprise', role: 'recruiter', price: 'Sur devis', priceDesc: '', analysisLimit: 1000, features: ['Analyses illimitées', 'Intégration ATS', 'Support dédié', 'Tableau de bord personnalisé'], ctaText: 'Nous contacter', ctaLink: 'https://wa.me/212783346308', isCtaOutline: true, displayOrder: 3 },
-    ];
-    if (await Plan.countDocuments() === 0) {
-        console.log('Seeding plans...');
-        await Plan.insertMany(plans);
-        console.log('Plans seeded.');
+async function syncPlans() {
+    try {
+        console.log('Synchronizing plans with the database...');
+        const plansToSync = [
+            { name: 'Gratuit Candidat', userType: 'job_seeker', price: '0 MAD', priceDesc: 'pour commencer', analysisLimit: 3, features: ['3 analyses de CV', 'Analyse de compatibilité', 'Suggestions de mots-clés', 'Support par email'], ctaText: 'Commencer gratuitement', ctaLink: '/register', displayOrder: 1 },
+            { name: 'Premium', userType: 'job_seeker', price: '99 MAD', priceDesc: '/ mois', analysisLimit: 15, features: ['15 analyses de CV', 'Réécriture de CV par IA', 'Tons personnalisables (Pro, Créatif...)', 'Support prioritaire'], badge: 'Populaire', ctaText: 'Passer au Premium', ctaLink: '#', isCtaOutline: false, displayOrder: 2 },
+            { name: 'Gratuit Recruteur', userType: 'recruiter', price: '0 MAD', priceDesc: 'pour les besoins simples', analysisLimit: 2, features: ['2 analyses de CV', 'Analyse multi-CV', 'Classement des candidats', 'Support par email'], ctaText: 'Créer un compte', ctaLink: '/register', displayOrder: 1 },
+            { name: 'Pro', userType: 'recruiter', price: '499 MAD', priceDesc: '/ mois', analysisLimit: 25, features: ['25 analyses de CV', 'Téléchargement des rapports PDF', 'Pas de publicité', 'Support téléphonique et email'], badge: 'Meilleure Valeur', ctaText: 'Choisir Pro', ctaLink: '#', displayOrder: 2 },
+            { name: 'Entreprise', userType: 'recruiter', price: 'Sur devis', priceDesc: '', analysisLimit: 50, features: ['50 analyses de CV', 'Intégration ATS', 'Support dédié', 'Tableau de bord personnalisé'], ctaText: 'Nous contacter', ctaLink: 'https://wa.me/212783346308', isCtaOutline: true, displayOrder: 3 },
+        ];
+
+        for (const planData of plansToSync) {
+            await Plan.updateOne({ name: planData.name }, { $set: planData }, { upsert: true });
+        }
+        
+        console.log('Plan synchronization complete.');
+
+    } catch (error) {
+        console.error('Error during plan synchronization process:', error);
     }
 }
+
+async function syncUserLimits() {
+    try {
+        console.log('Syncing user analysis limits with their plans...');
+        const plans = await Plan.find({});
+        let updates = [];
+
+        for (const plan of plans) {
+            updates.push({
+                updateMany: {
+                    filter: { plan: plan._id, maxAnalyses: { $ne: plan.analysisLimit } },
+                    update: { $set: { maxAnalyses: plan.analysisLimit } }
+                }
+            });
+        }
+
+        if (updates.length > 0) {
+            const result = await User.bulkWrite(updates);
+            if (result.isOk()) console.log(`User limits synchronized. Matched: ${result.matchedCount}, Modified: ${result.modifiedCount}`);
+        } else {
+            console.log('No user limits needed synchronization.');
+        }
+
+    } catch (error) {
+        console.error('Error during user limit synchronization:', error);
+    }
+}
+
 
 const upload = multer({ dest: 'uploads/' });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -64,7 +103,7 @@ app.use(session({
 }));
 
 app.use(async (req, res, next) => {
-    res.locals.user = req.session.userId ? await User.findById(req.session.userId) : null;
+    res.locals.user = req.session.userId ? await User.findById(req.session.userId).populate('plan') : null;
     next();
 });
 
@@ -102,17 +141,8 @@ app.get('/admin/login', (req, res) => res.render('admin-login', { error: req.que
 
 app.get('/pricing', async (req, res) => {
     try {
-        let jobSeekerPlans = [], recruiterPlans = [];
-        if (res.locals.user) {
-            if (res.locals.user.role === 'job_seeker') {
-                jobSeekerPlans = await Plan.find({ role: 'job_seeker' }).sort({ displayOrder: 1 });
-            } else if (res.locals.user.role === 'recruiter') {
-                recruiterPlans = await Plan.find({ role: 'recruiter' }).sort({ displayOrder: 1 });
-            }
-        } else {
-            jobSeekerPlans = await Plan.find({ role: 'job_seeker' }).sort({ displayOrder: 1 });
-            recruiterPlans = await Plan.find({ role: 'recruiter' }).sort({ displayOrder: 1 });
-        }
+        const jobSeekerPlans = await Plan.find({ userType: 'job_seeker' }).sort({ displayOrder: 1 });
+        const recruiterPlans = await Plan.find({ userType: 'recruiter' }).sort({ displayOrder: 1 });
         res.render('pricing', { jobSeekerPlans, recruiterPlans });
     } catch (error) {
         console.error('Error fetching plans:', error);
@@ -122,9 +152,17 @@ app.get('/pricing', async (req, res) => {
 
 app.post('/register', async (req, res) => {
   try {
-    await User.create(req.body);
+    const planName = req.body.role === 'recruiter' ? 'Gratuit Recruteur' : 'Gratuit Candidat';
+    const defaultPlan = await Plan.findOne({ name: planName });
+    const newUser = {
+        ...req.body,
+        plan: defaultPlan ? defaultPlan._id : null,
+        maxAnalyses: defaultPlan ? defaultPlan.analysisLimit : 0
+    };
+    await User.create(newUser);
     res.redirect('/login');
   } catch (error) {
+    console.error("Register Error:", error);
     res.redirect('/register?error=1');
   }
 });
@@ -166,21 +204,33 @@ app.get('/logout', (req, res, next) => {
 
 app.get('/analyzer', authorizeUser, authorizeJobSeeker, (req, res) => res.render('analyzer'));
 app.get('/recruiter', authorizeUser, authorizeRecruiter, (req, res) => res.render('recruiter'));
+
 app.get('/admin', authorizeAdminDashboard, async (req, res) => {
     try {
-        const users = await User.find({ role: { $ne: 'admin' } });
-        res.render('admin', { users });
+        const users = await User.find({ role: { $ne: 'admin' } }).populate('plan');
+        const plans = await Plan.find({});
+        res.render('admin', { users, plans });
     } catch (error) {
-        res.status(500).send("Error fetching users");
+        console.error("Admin Panel Error:", error);
+        res.status(500).send("Error fetching data for admin panel");
     }
 });
 
-app.post('/admin/update-quota', authorizeAdminDashboard, async (req, res) => {
+app.post('/admin/update-plan', authorizeAdminDashboard, async (req, res) => {
     try {
-        await User.findByIdAndUpdate(req.body.userId, { maxAnalyses: parseInt(req.body.newQuota, 10) });
+        const { userId, planId } = req.body;
+        const plan = await Plan.findById(planId);
+        if (!plan) {
+            return res.status(404).send("Plan not found");
+        }
+        await User.findByIdAndUpdate(userId, { 
+            plan: planId, 
+            maxAnalyses: plan.analysisLimit 
+        });
         res.redirect('/admin');
     } catch (error) {
-        res.status(500).send("Error updating quota");
+        console.error("Update Plan Error:", error);
+        res.status(500).send("Error updating user plan");
     }
 });
 
@@ -198,12 +248,10 @@ const analyzeUploads = upload.fields([ { name: 'cv', maxCount: 1 }, { name: 'job
 app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (req, res) => {
     const { cv: cvFile, jobDescriptionFile } = req.files || {};
     try {
-        const user = res.locals.user;
+        const user = await User.findById(req.session.userId); // Re-fetch user to be sure
         if (user.analysisCount >= user.maxAnalyses) {
             return res.status(403).json({ error: "Quota d'analyse atteint." });
         }
-
-        await User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: 1 } });
 
         const cvText = await getTextFromFile(cvFile ? cvFile[0] : null);
         const jobDescription = req.body.jobDescription || await getTextFromFile(jobDescriptionFile ? jobDescriptionFile[0] : null);
@@ -234,6 +282,7 @@ app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (r
             throw new Error("L'analyse a retourné des données incomplètes.");
         }
         
+        await User.findByIdAndUpdate(req.session.userId, { $inc: { analysisCount: 1 } });
         res.json(analysisData);
 
     } catch (error) {
@@ -248,7 +297,7 @@ app.post('/analyze-resumes', authorizeUser, authorizeRecruiter, recruiterUploads
     const { cvs, jobDescriptionFile } = req.files || {};
     
     try {
-        const user = res.locals.user;
+        const user = await User.findById(req.session.userId); // Re-fetch user
         const remainingAnalyses = user.maxAnalyses - user.analysisCount;
 
         if (!cvs || cvs.length === 0) {

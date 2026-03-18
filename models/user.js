@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['job_seeker', 'recruiter', 'admin'], required: true },
   analysisCount: { type: Number, default: 0 },
   maxAnalyses: { type: Number, default: 5 },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  plan: { type: mongoose.Schema.Types.ObjectId, ref: 'Plan' }
 });
 
 userSchema.pre('save', async function(next) {

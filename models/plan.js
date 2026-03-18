@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const planSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
-    role: { type: String, required: true, enum: ['job_seeker', 'recruiter'] },
+    userType: { type: String, required: true, enum: ['job_seeker', 'recruiter'] },
     price: { type: String, required: true },
     priceDesc: { type: String, default: '' },
     analysisLimit: { type: Number, required: true },

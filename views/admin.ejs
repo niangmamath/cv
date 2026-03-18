@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de Bord Administrateur - Ubuntudigit Talent</title>
     <link rel="icon" href="https://res.cloudinary.com/dlqwxsufy/image/upload/v1773144575/Logo_ud_tarj6a.png" type="image/png">
-    <link rel="stylesheet" href="/styles.css?v=5">
+    <link rel="stylesheet" href="/styles.css?v=6">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <meta name="robots" content="noindex, nofollow">
 </head>
@@ -24,13 +24,13 @@
     <main class="dashboard-main">
         <div class="dashboard-title">
             <h1><i class="fas fa-tachometer-alt"></i> Tableau de Bord</h1>
-            <p>Gestion complète des utilisateurs de la plateforme.</p>
+            <p>Gestion complète des utilisateurs et de leurs plans.</p>
         </div>
 
         <div class="user-list-container card">
             <div class="card-header">
-                <h2><i class="fas fa-users"></i> Liste des Utilisateurs Enregistrés</h2>
-                 <div class="user-count">
+                <h2><i class="fas fa-users"></i> Liste des Utilisateurs</h2>
+                <div class="user-count">
                     <span class="count-number"><%= users.length %></span> utilisateurs
                 </div>
             </div>
@@ -38,11 +38,11 @@
                 <table class="user-table">
                     <thead>
                         <tr>
-                            <th><i class="fas fa-user"></i> Nom d'utilisateur</th>
                             <th><i class="fas fa-envelope"></i> Email</th>
                             <th><i class="fas fa-user-tag"></i> Rôle</th>
+                            <th><i class="fas fa-pencil-alt"></i> Plan Actuel</th>
                             <th><i class="fas fa-chart-bar"></i> Utilisation</th>
-                            <th><i class="fas fa-calendar-alt"></i> Date d'inscription</th>
+                            <th><i class="fas fa-calendar-alt"></i> Inscrit le</th>
                             <th class="actions-column"><i class="fas fa-cogs"></i> Actions</th>
                         </tr>
                     </thead>
@@ -50,16 +50,16 @@
                         <% if(users.length > 0) { %>
                             <% users.forEach(user => { %>
                                 <tr>
-                                    <td><%= user.username %></td>
-                                    <td><a href="mailto:<%= user.email %>"><%= user.email %></a></td>
+                                    <td><a href="mailto:<%= user.email %>" title="Envoyer un email à <%= user.username %>"><%= user.email %></a></td>
                                     <td>
                                         <span class="role-badge role-<%= user.role.replace('_', '-') %>">
-                                            <% if (user.role === 'recruiter') { %>
-                                                <i class="fas fa-user-tie"></i>
-                                            <% } else { %>
-                                                <i class="fas fa-user-graduate"></i>
-                                            <% } %>
-                                            <%= user.role.replace('_', ' ') %>
+                                            <i class="fas <%= user.role === 'recruiter' ? 'fa-user-tie' : 'fa-user-graduate' %>"></i>
+                                            <%= user.role === 'job_seeker' ? 'Candidat' : 'Recruteur' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="plan-badge">
+                                            <%= user.plan ? user.plan.name : 'Aucun' %>
                                         </span>
                                     </td>
                                     <td>
@@ -69,11 +69,21 @@
                                     </td>
                                     <td><%= new Date(user.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) %></td>
                                     <td class="actions-cell">
-                                        <form action="/admin/update-quota" method="POST" class="action-form">
+                                        
+                                        <form action="/admin/update-plan" method="POST" class="action-form plan-form">
                                             <input type="hidden" name="userId" value="<%= user._id %>">
-                                            <input type="number" name="newQuota" min="0" value="<%= user.maxAnalyses %>" class="quota-input" title="Nouveau quota maximal">
-                                            <button type="submit" class="action-btn save-btn" title="Sauvegarder le quota"><i class="fas fa-save"></i></button>
+                                            <select name="planId" class="plan-select" onchange="this.form.submit()">
+                                                <option value="">Changer de plan...</option>
+                                                <% plans.forEach(plan => { %>
+                                                    <% if (plan.userType === user.role) { %>
+                                                        <option value="<%= plan._id %>" <%= (user.plan && user.plan._id.equals(plan._id)) ? 'selected' : '' %>>
+                                                            <%= plan.name %>
+                                                        </option>
+                                                    <% } %>
+                                                <% }); %>
+                                            </select>
                                         </form>
+
                                         <form action="/admin/delete-user" method="POST" class="action-form" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');">
                                             <input type="hidden" name="userId" value="<%= user._id %>">
                                             <button type="submit" class="action-btn delete-btn" title="Supprimer l'utilisateur"><i class="fas fa-trash-alt"></i></button>
@@ -91,17 +101,18 @@
             </div>
         </div>
     </main>
+
 <script>
-    // Petit script pour améliorer l'UX des formulaires d'action
-    document.querySelectorAll('.action-form').forEach(form => {
+    document.querySelectorAll('.plan-form').forEach(form => {
         form.addEventListener('submit', function() {
-            const btn = this.querySelector('button[type="submit"]');
-            if(btn) {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                btn.disabled = true;
+            const select = this.querySelector('select');
+            // Optionnel: désactiver le select pour éviter un double envoi
+            if (select) {
+                select.disabled = true;
             }
         });
     });
 </script>
+
 </body>
 </html>

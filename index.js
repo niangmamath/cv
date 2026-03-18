@@ -141,9 +141,24 @@ app.get('/admin/login', (req, res) => res.render('admin-login', { error: req.que
 
 app.get('/pricing', async (req, res) => {
     try {
-        const jobSeekerPlans = await Plan.find({ userType: 'job_seeker' }).sort({ displayOrder: 1 });
-        const recruiterPlans = await Plan.find({ userType: 'recruiter' }).sort({ displayOrder: 1 });
+        let jobSeekerPlans = [];
+        let recruiterPlans = [];
+
+        if (res.locals.user) {
+            // User is logged in, show plans for their role
+            if (res.locals.user.role === 'job_seeker') {
+                jobSeekerPlans = await Plan.find({ userType: 'job_seeker' }).sort({ displayOrder: 1 });
+            } else if (res.locals.user.role === 'recruiter') {
+                recruiterPlans = await Plan.find({ userType: 'recruiter' }).sort({ displayOrder: 1 });
+            }
+        } else {
+            // User is not logged in, show all plans
+            jobSeekerPlans = await Plan.find({ userType: 'job_seeker' }).sort({ displayOrder: 1 });
+            recruiterPlans = await Plan.find({ userType: 'recruiter' }).sort({ displayOrder: 1 });
+        }
+
         res.render('pricing', { jobSeekerPlans, recruiterPlans });
+
     } catch (error) {
         console.error('Error fetching plans:', error);
         res.status(500).send('Error loading pricing page.');
@@ -277,7 +292,7 @@ app.post('/analyze', authorizeUser, authorizeJobSeeker, analyzeUploads, async (r
             throw new Error("L'analyse a échoué car la réponse de l'IA était mal formatée.");
         }
 
-        if (!analysisData || typeof analysisData.score === 'undefined' || !analysisData.analysis) {
+        if (!analysisData || typeof data.score === 'undefined' || !analysisData.analysis) {
             console.error("Invalid or incomplete data from OpenAI:", analysisData);
             throw new Error("L'analyse a retourné des données incomplètes.");
         }

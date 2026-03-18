@@ -13,15 +13,20 @@
 
     <main class="pricing-main-container">
         <section class="pricing-hero">
-            <h1>Trouvez le plan parfait pour vous</h1>
-            <p>Que vous soyez un talent à la recherche de votre prochain défi ou un recruteur en quête des meilleurs profils, nous avons l'offre qu'il vous faut.</p>
+            <% if (user) { %>
+                <h1>Nos offres <%= user.role === 'job_seeker' ? 'Candidat' : 'Recruteur' %></h1>
+                <p>Mettez à niveau votre plan pour débloquer plus de fonctionnalités et accélérer votre succès.</p>
+            <% } else { %>
+                <h1>Trouvez le plan parfait pour vous</h1>
+                <p>Que vous soyez un talent à la recherche de votre prochain défi ou un recruteur en quête des meilleurs profils, nous avons l'offre qu'il vous faut.</p>
+            <% } %>
         </section>
 
         <div class="container pricing-container">
 
             <% if (jobSeekerPlans && jobSeekerPlans.length > 0) { %>
                 <div class="plan-category">
-                    <h2>Pour les Candidats</h2>
+                    <% if (!user) { %> <h2>Pour les Candidats</h2> <% } %>
                     <div class="plans-grid">
                         <% jobSeekerPlans.forEach(plan => { %>
                             <div class="plan-card <%= plan.badge ? 'popular' : '' %>">
@@ -36,19 +41,21 @@
                                         <li><i class="fas fa-check-circle"></i> <%= feature %></li>
                                     <% }) %>
                                 </ul>
-                                <% if (!(user && plan.price.trim().startsWith('0'))) { %>
+                                <% if (!(user && user.plan && user.plan.name === plan.name)) { %>
                                     <% 
                                         let finalCtaLink = plan.ctaLink;
-                                        if (user) { 
-                                            const message = `Bonjour, je suis intéressé(e) par l\'offre '${plan.name}'. Mon nom d\'utilisateur est '${user.username}'.`;
-                                            finalCtaLink = `https://wa.me/212783346308?text=${encodeURIComponent(message)}`;
-                                        } else { 
-                                            if (!plan.price.trim().startsWith('0')) {
+                                        if (plan.price.trim() !== '0 MAD') { 
+                                             if (user) {
+                                                const message = `Bonjour, je suis intéressé(e) par l\'offre '${plan.name}'. Mon nom d\'utilisateur est '${user.username}'.`;
+                                                finalCtaLink = `https://wa.me/212783346308?text=${encodeURIComponent(message)}`;
+                                             } else {
                                                 finalCtaLink = '/login';
-                                            }
+                                             }
                                         }
                                     %>
                                     <a href="<%= finalCtaLink %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
+                                <% } else if (user && user.plan && user.plan.name === plan.name) { %>
+                                    <span class="current-plan-button">Votre Plan Actuel</span>
                                 <% } %>
                             </div>
                         <% }) %>
@@ -58,7 +65,7 @@
 
             <% if (recruiterPlans && recruiterPlans.length > 0) { %>
                 <div class="plan-category">
-                    <h2>Pour les Recruteurs</h2>
+                     <% if (!user) { %> <h2>Pour les Recruteurs</h2> <% } %>
                     <div class="plans-grid">
                         <% recruiterPlans.forEach(plan => { %>
                             <div class="plan-card <%= plan.badge ? 'popular' : '' %>">
@@ -73,19 +80,21 @@
                                         <li><i class="fas fa-check-circle"></i> <%= feature %></li>
                                     <% }) %>
                                 </ul>
-                                <% if (!(user && plan.price.trim().startsWith('0'))) { %>
+                               <% if (!(user && user.plan && user.plan.name === plan.name)) { %>
                                     <% 
-                                        let finalCtaLinkRecruiter = plan.ctaLink;
-                                        if (user) { 
-                                            const message = `Bonjour, je suis intéressé(e) par l\'offre '${plan.name}'. Mon nom d\'utilisateur est '${user.username}'.`;
-                                            finalCtaLinkRecruiter = `https://wa.me/212783346308?text=${encodeURIComponent(message)}`;
-                                        } else { 
-                                            if (!plan.price.trim().startsWith('0')) {
-                                                finalCtaLinkRecruiter = '/login';
-                                            }
+                                        let finalCtaLink = plan.ctaLink;
+                                        if (plan.price.trim() !== '0 MAD') { 
+                                             if (user) {
+                                                const message = `Bonjour, je suis intéressé(e) par l\'offre '${plan.name}'. Mon nom d\'utilisateur est '${user.username}'.`;
+                                                finalCtaLink = `https://wa.me/212783346308?text=${encodeURIComponent(message)}`;
+                                             } else {
+                                                finalCtaLink = '/login';
+                                             }
                                         }
                                     %>
-                                    <a href="<%= finalCtaLinkRecruiter %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= plan.ctaText %></a>
+                                    <a href="<%= finalCtaLink %>" class="cta-button <%= plan.isCtaOutline ? 'outline' : '' %>"><%= finalCtaLink === '#' ? '#' : finalCtaLink %></a>
+                                <% } else if (user && user.plan && user.plan.name === plan.name) { %>
+                                    <span class="current-plan-button">Votre Plan Actuel</span>
                                 <% } %>
                             </div>
                         <% }) %>
